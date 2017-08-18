@@ -118,13 +118,13 @@ static int pty_sigarray[] = { SIGWINCH, 0 };
 
 static int  _become_user(void);
 static void _call_spank_fini(void);
-static int  _call_spank_local_user(srun_job_t *job, opt_t *opt_local);
+static int  _call_spank_local_user(srun_job_t *job, srun_opt_t *opt_local);
 static void _default_sigaction(int sig);
 static long _diff_tv_str(struct timeval *tv1, struct timeval *tv2);
 static void _handle_intr(srun_job_t *job);
 static void _handle_pipe(void);
 static srun_job_t *_job_create_structure(allocation_info_t *ainfo,
-					 opt_t *opt_local);
+					 srun_opt_t *opt_local);
 static char *_normalize_hostlist(const char *hostlist);
 static void _print_job_information(resource_allocation_response_msg_t *resp);
 static void _run_srun_epilog (srun_job_t *job);
@@ -134,7 +134,7 @@ static void _set_env_vars(resource_allocation_response_msg_t *resp,
 			  int pack_offset);
 static void _set_env_vars2(resource_allocation_response_msg_t *resp,
 			   int pack_offset);
-static void _set_ntasks(allocation_info_t *ai, opt_t *opt_local);
+static void _set_ntasks(allocation_info_t *ai, srun_opt_t *opt_local);
 static void _set_prio_process_env(void);
 static int  _set_rlimit_env(void);
 static void _set_submit_dir_env(void);
@@ -143,9 +143,9 @@ static void _shepherd_notify(int shepherd_fd);
 static int  _shepherd_spawn(srun_job_t *job, List srun_job_list,
 			     bool got_alloc);
 static void *_srun_signal_mgr(void *no_data);
-static void _step_opt_exclusive(opt_t *opt_local);
+static void _step_opt_exclusive(srun_opt_t *opt_local);
 static int  _validate_relative(resource_allocation_response_msg_t *resp,
-			       opt_t *opt_local);
+			       srun_opt_t *opt_local);
 
 
 /*
@@ -159,7 +159,7 @@ job_create_noalloc(void)
 	allocation_info_t *ai = xmalloc(sizeof(allocation_info_t));
 	uint16_t cpn[1];
 	uint32_t cpu_count_reps[1];
-	opt_t *opt_local = &opt;
+	srun_opt_t *opt_local = &opt;
 	hostlist_t  hl = hostlist_create(opt_local->nodelist);
 
 	if (!hl) {
@@ -202,7 +202,7 @@ error:
  */
 extern srun_job_t *job_step_create_allocation(
 			resource_allocation_response_msg_t *resp,
-			opt_t *opt_local)
+			srun_opt_t *opt_local)
 {
 	uint32_t job_id = resp->job_id;
 	srun_job_t *job = NULL;
@@ -425,7 +425,7 @@ error:
  */
 extern srun_job_t *job_create_allocation(
 			resource_allocation_response_msg_t *resp,
-			opt_t *opt_local)
+			srun_opt_t *opt_local)
 {
 	srun_job_t *job;
 	allocation_info_t *i = xmalloc(sizeof(allocation_info_t));
@@ -458,14 +458,14 @@ extern srun_job_t *job_create_allocation(
 	return (job);
 }
 
-static void _copy_args(List missing_argc_list, opt_t *opt_master)
+static void _copy_args(List missing_argc_list, srun_opt_t *opt_master)
 {
 	ListIterator iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 	int i;
 
 	iter = list_iterator_create(missing_argc_list);
-	while ((opt_local = (opt_t *) list_next(iter))) {
+	while ((opt_local = (srun_opt_t *) list_next(iter))) {
 		opt_local->argc = opt_master->argc;
 		opt_local->argv = xmalloc(sizeof(char *) * (opt_local->argc+1));
 		for (i = 0; i < opt_local->argc; i++)
@@ -483,7 +483,7 @@ static void _copy_args(List missing_argc_list, opt_t *opt_master)
 static void _pack_grp_test(List opt_list)
 {
 	ListIterator iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 	int pack_offset;
 	bitstr_t *master_map = NULL;
 	List missing_argv_list = NULL;
@@ -492,7 +492,7 @@ static void _pack_grp_test(List opt_list)
 	if (opt_list) {
 		missing_argv_list = list_create(NULL);
 		iter = list_iterator_create(opt_list);
-		while ((opt_local = (opt_t *) list_next(iter))) {
+		while ((opt_local = (srun_opt_t *) list_next(iter))) {
 			if (opt_local->argc == 0)
 				list_append(missing_argv_list, opt_local);
 			else
@@ -548,7 +548,7 @@ static void _match_job_name(List opt_list)
 {
 	int cnt;
 	ListIterator iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 
 	if (!opt_list)
 		return;
@@ -558,7 +558,7 @@ static void _match_job_name(List opt_list)
 		return;
 
 	iter = list_iterator_create(opt_list);
-	while ((opt_local = (opt_t *) list_next(iter))) {
+	while ((opt_local = (srun_opt_t *) list_next(iter))) {
 		if (!opt_local->job_name)
 			opt_local->job_name = xstrdup(opt.job_name);
 	}
@@ -669,7 +669,7 @@ extern void init_srun(int argc, char **argv,
 /*
  * Modify options for a job step (after job allocaiton is complete
  */
-static void _set_step_opts(opt_t *opt_local)
+static void _set_step_opts(srun_opt_t *opt_local)
 {
 	opt_local->time_limit = NO_VAL;/* not applicable for step, only job */
 	xfree(opt_local->constraints);	/* not applicable for this step */
@@ -698,7 +698,7 @@ static int _create_job_step(srun_job_t *job, bool use_all_cpus,
 			    char *pack_nodelist)
 {
 	ListIterator opt_iter = NULL, job_iter;
-	opt_t *opt_local = &opt;
+	srun_opt_t *opt_local = &opt;
 	uint32_t node_offset = 0, step_id = NO_VAL;
 	uint32_t pack_offset = 0, pack_ntasks = 0, task_offset = 0;
 	int rc = 0;
@@ -719,7 +719,7 @@ static int _create_job_step(srun_job_t *job, bool use_all_cpus,
 		list_iterator_reset(job_iter);
 		while ((job = (srun_job_t *) list_next(job_iter))) {
 			if (opt_list)
-				opt_local = (opt_t *) list_next(opt_iter);
+				opt_local = (srun_opt_t *) list_next(opt_iter);
 			if (!opt_local)
 				fatal("%s: opt_list too short", __func__);
 			job->pack_offset = pack_offset;
@@ -922,7 +922,7 @@ extern void create_srun_job(void **p_job, bool *got_alloc,
 	ListIterator opt_iter, resp_iter;
 	srun_job_t *job = NULL;
 	int i, max_list_offset, max_pack_offset, pack_offset = -1;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 	uint32_t my_job_id = 0, pack_jobid = 0;
 	char *pack_nodelist = NULL;
 	bool begin_error_logged = false;
@@ -1136,7 +1136,7 @@ extern void create_srun_job(void **p_job, bool *got_alloc,
 					my_job_id = resp->job_id;
 					*got_alloc = true;
 				}
-				opt_local = (opt_t *) list_next(opt_iter);
+				opt_local = (srun_opt_t *) list_next(opt_iter);
 				if (!opt_local)
 					break;
 				if (!global_resp)	/* Used by Cray/ALPS */
@@ -1223,7 +1223,7 @@ extern void create_srun_job(void **p_job, bool *got_alloc,
 }
 
 extern void pre_launch_srun_job(srun_job_t *job, bool slurm_started,
-				bool handle_signals, opt_t *opt_local)
+				bool handle_signals, srun_opt_t *opt_local)
 {
 	if (handle_signals && !signal_thread) {
 		slurm_thread_create(&signal_thread, _srun_signal_mgr, job);
@@ -1327,7 +1327,7 @@ job_force_termination(srun_job_t *job)
 	kill_sent++;
 }
 
-static void _set_ntasks(allocation_info_t *ai, opt_t *opt_local)
+static void _set_ntasks(allocation_info_t *ai, srun_opt_t *opt_local)
 {
 	int cnt = 0;
 
@@ -1354,7 +1354,7 @@ static void _set_ntasks(allocation_info_t *ai, opt_t *opt_local)
  * Create an srun job structure from a resource allocation response msg
  */
 static srun_job_t *_job_create_structure(allocation_info_t *ainfo,
-					 opt_t *opt_local)
+					 srun_opt_t *opt_local)
 {
 	srun_job_t *job = xmalloc(sizeof(srun_job_t));
 	int i;
@@ -1483,7 +1483,7 @@ static srun_job_t *_job_create_structure(allocation_info_t *ainfo,
 	return (job);
 }
 
-extern void job_update_io_fnames(srun_job_t *job, opt_t *opt_local)
+extern void job_update_io_fnames(srun_job_t *job, srun_opt_t *opt_local)
 {
 	job->ifname = fname_create(job, opt_local->ifname, opt_local->ntasks);
 	job->ofname = fname_create(job, opt_local->ofname, opt_local->ntasks);
@@ -1537,7 +1537,7 @@ static int _become_user (void)
 	return (0);
 }
 
-static int _call_spank_local_user(srun_job_t *job, opt_t *opt_local)
+static int _call_spank_local_user(srun_job_t *job, srun_opt_t *opt_local)
 {
 	struct spank_launcher_job_info info[1];
 
@@ -2114,7 +2114,7 @@ static void *_srun_signal_mgr(void *job_ptr)
 }
 
 /* opt_local->exclusive is set, disable user task layout controls */
-static void _step_opt_exclusive(opt_t *opt_local)
+static void _step_opt_exclusive(srun_opt_t *opt_local)
 {
 	if (!opt_local->ntasks_set) {
 		error("--ntasks must be set with --exclusive");
@@ -2131,7 +2131,7 @@ static void _step_opt_exclusive(opt_t *opt_local)
 }
 
 static int _validate_relative(resource_allocation_response_msg_t *resp,
-			      opt_t *opt_local)
+			      srun_opt_t *opt_local)
 {
 
 	if (opt_local->relative_set &&

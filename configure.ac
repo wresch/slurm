@@ -524,6 +524,9 @@ AC_CONFIG_FILES([Makefile
 		 src/plugins/checkpoint/blcr/cr_restart.sh
 		 src/plugins/checkpoint/none/Makefile
 		 src/plugins/checkpoint/ompi/Makefile
+		 src/plugins/cli_filter/Makefile
+		 src/plugins/cli_filter/defaults/Makefile
+		 src/plugins/cli_filter/lua/Makefile
 		 src/plugins/core_spec/Makefile
 		 src/plugins/core_spec/cray/Makefile
 		 src/plugins/core_spec/none/Makefile

@@ -174,7 +174,7 @@
 #define LONG_OPT_CLUSTER_CONSTRAINT 0x168
 
 /*---- global variables, defined in opt.h ----*/
-opt_t opt;
+salloc_opt_t opt;
 int error_exit = 1;
 bool first_pass = true;
 int immediate_exit = 1;

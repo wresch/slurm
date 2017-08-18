@@ -214,7 +214,7 @@ resource_allocation_response_msg_t *global_resp = NULL;
 int	error_exit = 1;
 int	immediate_exit = 1;
 char *	mpi_type = NULL;
-opt_t	opt;
+srun_opt_t	opt;
 List 	opt_list = NULL;
 int	pass_number = 0;
 time_t	srun_begin_time = 0;
@@ -361,8 +361,8 @@ char *opt_string = "+A:B:c:C:d:D:e:Eg:hHi:I::jJ:kK::lL:m:M:n:N:"
 		   "o:Op:P:qQr:RsS:t:T:uU:vVw:W:x:XZ";
 
 
-static opt_t *_get_first_opt(int pack_offset);
-static opt_t *_get_next_opt(int pack_offset, opt_t *opt_last);
+static srun_opt_t *_get_first_opt(int pack_offset);
+static srun_opt_t *_get_next_opt(int pack_offset, srun_opt_t *opt_last);
 
 static int  _get_task_count(void);
 
@@ -402,10 +402,10 @@ static bool  _valid_node_list(char **node_list_pptr);
  * pack_offset IN - Offset into pack job or -1 if regular job
  * RET - Pointer to option structure or NULL if none found
  */
-static opt_t *_get_first_opt(int pack_offset)
+static srun_opt_t *_get_first_opt(int pack_offset)
 {
 	ListIterator opt_iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 
 	if (!opt_list) {
 		if (!opt.pack_grp_bits && (pack_offset == -1))
@@ -419,7 +419,7 @@ static opt_t *_get_first_opt(int pack_offset)
 	}
 
 	opt_iter = list_iterator_create(opt_list);
-	while ((opt_local = (opt_t *) list_next(opt_iter))) {
+	while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 		if (opt_local->pack_grp_bits &&
 		    (pack_offset >= 0) &&
 		    (pack_offset < bit_size(opt_local->pack_grp_bits)) &&
@@ -437,17 +437,17 @@ static opt_t *_get_first_opt(int pack_offset)
  * opt_last IN - past option structure found for this pack offset
  * RET - Pointer to option structure or NULL if none found
  */
-static opt_t *_get_next_opt(int pack_offset, opt_t *opt_last)
+static srun_opt_t *_get_next_opt(int pack_offset, srun_opt_t *opt_last)
 {
 	ListIterator opt_iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 	bool found_last = false;
 
 	if (!opt_list)
 		return NULL;
 
 	opt_iter = list_iterator_create(opt_list);
-	while ((opt_local = (opt_t *) list_next(opt_iter))) {
+	while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 		if (!found_last) {
 			if (opt_last == opt_local)
 				found_last = true;
@@ -470,10 +470,10 @@ static opt_t *_get_next_opt(int pack_offset, opt_t *opt_last)
  * pack_offset IN - Offset into pack job, -1 if regular job, -2 to reset
  * RET - Pointer to next matching option structure or NULL if none found
  */
-extern opt_t *get_next_opt(int pack_offset)
+extern srun_opt_t *get_next_opt(int pack_offset)
 {
 	static int offset_last = -2;
-	static opt_t *opt_last = NULL;
+	static srun_opt_t *opt_last = NULL;
 
 	if (pack_offset == -2) {
 		offset_last = -2;
@@ -496,12 +496,12 @@ extern opt_t *get_next_opt(int pack_offset)
 extern int get_max_pack_group(void)
 {
 	ListIterator opt_iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 	int max_pack_offset = 0, pack_offset = 0;
 
 	if (opt_list) {
 		opt_iter = list_iterator_create(opt_list);
-		while ((opt_local = (opt_t *) list_next(opt_iter))) {
+		while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 			if (opt_local->pack_grp_bits)
 				pack_offset = bit_fls(opt_local->pack_grp_bits);
 			if (pack_offset >= max_pack_offset)
@@ -542,9 +542,9 @@ extern int initialize_and_process_args(int argc, char **argv, int *argc_off)
 			continue;
 		pass_number++;
 		if (pending_append) {
-			opt_t *opt_dup;
-			opt_dup = xmalloc(sizeof(opt_t));
-			memcpy(opt_dup, &opt, sizeof(opt_t));
+			srun_opt_t *opt_dup;
+			opt_dup = xmalloc(sizeof(srun_opt_t));
+			memcpy(opt_dup, &opt, sizeof(srun_opt_t));
 			if (!opt_list)
 				opt_list = list_create(NULL);
 			list_append(opt_list, opt_dup);
@@ -594,9 +594,9 @@ extern int initialize_and_process_args(int argc, char **argv, int *argc_off)
 	bit_free(pack_grp_bits);
 
 	if (opt_list && pending_append) {		/* Last record */
-		opt_t *opt_dup;
-		opt_dup = xmalloc(sizeof(opt_t));
-		memcpy(opt_dup, &opt, sizeof(opt_t));
+		srun_opt_t *opt_dup;
+		opt_dup = xmalloc(sizeof(srun_opt_t));
+		memcpy(opt_dup, &opt, sizeof(srun_opt_t));
 		list_append(opt_list, opt_dup);
 		pending_append = false;
 	}

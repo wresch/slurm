@@ -58,6 +58,7 @@
 #include "src/common/slurm_rlimits_info.h"
 #include "src/common/xstring.h"
 #include "src/common/xmalloc.h"
+#include "src/common/cli_filter.h"
 
 #include "src/sbatch/opt.h"
 
@@ -85,6 +86,7 @@ int main(int argc, char **argv)
 	char *script_name;
 	char *script_body;
 	char **pack_argv;
+	char *cli_err_msg = NULL;
 	int script_size = 0, pack_argc, pack_argc_off = 0, pack_inx;
 	int i, rc = SLURM_SUCCESS, retries = 0;
 	bool pack_fini = false;
@@ -222,6 +224,14 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/* run cli_filter pre_submit */
+	rc = cli_filter_plugin_pre_submit(CLI_SBATCH, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* TODO print out cli_err_msg */
+		exit(error_exit);
+	}
+
 	if (job_req_list && is_alps_cray_system()) {
 		info("Heterogeneous jobs not supported on Cray/ALPS systems");
 		exit(1);
@@ -272,6 +282,14 @@ int main(int argc, char **argv)
 		else
 			error("%s", msg);
 		sleep(++retries);
+	}
+
+	/* run cli_filter post_submit */
+	rc = cli_filter_plugin_post_submit(CLI_SBATCH, resp->job_id, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* TODO print out cli_err_msg */
+		exit(error_exit);
 	}
 
 	if (!opt.parsable) {

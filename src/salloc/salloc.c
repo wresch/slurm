@@ -68,6 +68,7 @@
 #include "src/common/xmalloc.h"
 #include "src/common/xsignal.h"
 #include "src/common/xstring.h"
+#include "src/common/cli_filter.h"
 
 #include "src/salloc/salloc.h"
 #include "src/salloc/opt.h"
@@ -182,6 +183,7 @@ int main(int argc, char **argv)
 	time_t before, after;
 	allocation_msg_thread_t *msg_thr;
 	char **env = NULL, *cluster_name;
+	char *cli_err_msg = NULL;
 	int status = 0;
 	int retries = 0;
 	pid_t pid  = getpid();
@@ -296,6 +298,14 @@ int main(int argc, char **argv)
 	_match_job_name(job_req_list, opt.job_name);
 	if (!job_req_list)
 		desc->bitflags &= (~JOB_SALLOC_FLAG);
+
+	/* run cli_filter pre_submit */
+	rc = cli_filter_plugin_pre_submit(CLI_SALLOC, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* TODO print out cli_err_msg */
+		exit(error_exit);
+	}
 
 	/*
 	 * Job control for interactive salloc sessions: only if ...
@@ -1008,8 +1018,17 @@ static pid_t _fork_command(char **command)
 
 static void _pending_callback(uint32_t job_id)
 {
+	int rc = 0;
+	char *cli_err_msg = NULL;
 	info("Pending job allocation %u", job_id);
 	my_job_id = job_id;
+
+	/* run cli_filter post_submit */
+	rc = cli_filter_plugin_post_submit(CLI_SALLOC, job_id, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* TODO display error */
+	}
 }
 
 static void _exit_on_signal(int signo)

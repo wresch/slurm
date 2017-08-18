@@ -191,7 +191,7 @@ enum wrappers {
 #define LONG_OPT_CLUSTER_CONSTRAINT 0x169
 
 /*---- global variables, defined in opt.h ----*/
-opt_t opt;
+sbatch_opt_t opt;
 sbatch_env_t pack_env;
 int   error_exit = 1;
 int   ignore_pbs = 0;
