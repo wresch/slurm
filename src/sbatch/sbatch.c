@@ -59,7 +59,6 @@
 #include "src/common/xstring.h"
 #include "src/common/xmalloc.h"
 #include "src/common/cli_filter.h"
-
 #include "src/sbatch/opt.h"
 
 #define MAX_RETRIES 15

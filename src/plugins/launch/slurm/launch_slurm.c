@@ -96,7 +96,7 @@ static pthread_mutex_t launch_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t pack_lock   = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  start_cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t start_mutex = PTHREAD_MUTEX_INITIALIZER;
-static opt_t *opt_save = NULL;
+static srun_opt_t *opt_save = NULL;
 
 static List task_state_list = NULL;
 static time_t launch_start_time;
@@ -523,7 +523,7 @@ extern int fini(void)
 	return SLURM_SUCCESS;
 }
 
-extern int launch_p_setup_srun_opt(char **rest, opt_t *opt_local)
+extern int launch_p_setup_srun_opt(char **rest, srun_opt_t *opt_local)
 {
 	if (opt_local->debugger_test && opt_local->parallel_debug)
 		MPIR_being_debugged  = 1;
@@ -538,7 +538,7 @@ extern int launch_p_setup_srun_opt(char **rest, opt_t *opt_local)
 	return 0;
 }
 
-extern int launch_p_handle_multi_prog_verify(int command_pos, opt_t *opt_local)
+extern int launch_p_handle_multi_prog_verify(int command_pos, srun_opt_t *opt_local)
 {
 	if (opt_local->multi_prog) {
 		if (opt_local->argc < 1) {
@@ -558,7 +558,8 @@ extern int launch_p_handle_multi_prog_verify(int command_pos, opt_t *opt_local)
 
 extern int launch_p_create_job_step(srun_job_t *job, bool use_all_cpus,
 				    void (*signal_function)(int),
-				    sig_atomic_t *destroy_job, opt_t *opt_local)
+				    sig_atomic_t *destroy_job,
+				    srun_opt_t *opt_local)
 {
 	if (launch_common_create_job_step(job, use_all_cpus,
 					  signal_function, destroy_job,
@@ -574,7 +575,7 @@ extern int launch_p_create_job_step(srun_job_t *job, bool use_all_cpus,
 	return SLURM_SUCCESS;
 }
 
-static char **_build_user_env(srun_job_t *job, opt_t *opt_local)
+static char **_build_user_env(srun_job_t *job, srun_opt_t *opt_local)
 {
 	char **dest_array = NULL;
 	char *tmp_env, *tok, *save_ptr = NULL, *eq_ptr, *value;
@@ -657,7 +658,7 @@ static void _wait_all_pack_started(opt_t *opt_local)
 extern int launch_p_step_launch(srun_job_t *job, slurm_step_io_fds_t *cio_fds,
 				uint32_t *global_rc,
 				slurm_step_launch_callbacks_t *step_callbacks,
-				opt_t *opt_local)
+				srun_opt_t *opt_local)
 {
 	slurm_step_launch_params_t launch_params;
 	slurm_step_launch_callbacks_t callbacks;
@@ -770,8 +771,8 @@ extern int launch_p_step_launch(srun_job_t *job, slurm_step_io_fds_t *cio_fds,
 			 * Save opt_local paramters since _task_finish()
 			 * will lack the values
 			 */
-			opt_save = xmalloc(sizeof(opt_t));
-			memcpy(opt_save, opt_local, sizeof(opt_t));
+			opt_save = xmalloc(sizeof(srun_opt_t));
+			memcpy(opt_save, opt_local, sizeof(srun_opt_t));
 		}
 		slurm_mutex_unlock(&launch_lock);
 	}
@@ -832,7 +833,7 @@ cleanup:
 	return rc;
 }
 
-extern int launch_p_step_wait(srun_job_t *job, bool got_alloc, opt_t *opt_local)
+extern int launch_p_step_wait(srun_job_t *job, bool got_alloc, srun_opt_t *opt_local)
 {
 	int rc = 0;
 
