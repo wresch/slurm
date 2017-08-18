@@ -94,7 +94,7 @@ static uint32_t pending_job_id = 0;
 /*
  * Static Prototypes
  */
-static job_desc_msg_t *_job_desc_msg_create_from_opts(opt_t *opt_local);
+static job_desc_msg_t *_job_desc_msg_create_from_opts(srun_opt_t *opt_local);
 static void _set_pending_job_id(uint32_t job_id);
 static void _signal_while_allocating(int signo);
 
@@ -426,7 +426,7 @@ static int _wait_nodes_ready(resource_allocation_response_msg_t *alloc)
 }
 #endif	/* HAVE_BG */
 
-static int _allocate_test(opt_t *opt_local)
+static int _allocate_test(srun_opt_t *opt_local)
 {
 	job_desc_msg_t *j;
 	int rc;
@@ -452,11 +452,11 @@ extern int allocate_test(void)
 {
 	int rc = SLURM_SUCCESS;
 	ListIterator iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 
 	if (opt_list) {
 		iter = list_iterator_create(opt_list);
-		while ((opt_local = (opt_t *) list_next(iter))) {
+		while ((opt_local = (srun_opt_t *) list_next(iter))) {
 			if ((rc = _allocate_test(opt_local)) != SLURM_SUCCESS)
 				break;
  		}
@@ -477,7 +477,7 @@ extern int allocate_test(void)
  * be freed with slurm_free_resource_allocation_response_msg()
  */
 extern resource_allocation_response_msg_t *
-	allocate_nodes(bool handle_signals, opt_t *opt_local)
+	allocate_nodes(bool handle_signals, srun_opt_t *opt_local)
 
 {
 	resource_allocation_response_msg_t *resp = NULL;
@@ -628,14 +628,14 @@ List allocate_pack_nodes(bool handle_signals)
 	job_desc_msg_t *j, *first_job = NULL;
 	slurm_allocation_callbacks_t callbacks;
 	ListIterator opt_iter, resp_iter;
-	opt_t *opt_local, *first_opt = NULL;
+	srun_opt_t *opt_local, *first_opt = NULL;
 	List job_req_list = NULL, job_resp_list = NULL;
 	uint32_t my_job_id = 0;
 	int i, k;
 
 	job_req_list = list_create(NULL);
 	opt_iter = list_iterator_create(opt_list);
-	while ((opt_local = (opt_t *) list_next(opt_iter))) {
+	while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 		if (!first_opt)
 			first_opt = opt_local;
 		if (opt_local->relative_set && opt_local->relative)
@@ -715,7 +715,7 @@ List allocate_pack_nodes(bool handle_signals)
 
 		opt_iter  = list_iterator_create(opt_list);
 		resp_iter = list_iterator_create(job_resp_list);
-		while ((opt_local = (opt_t *) list_next(opt_iter))) {
+		while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 			resp = (resource_allocation_response_msg_t *)
 			       list_next(resp_iter);
 			if (!resp)
@@ -881,7 +881,7 @@ int slurmctld_msg_init(void)
  * Create job description structure based off srun options
  * (see opt.h)
  */
-static job_desc_msg_t *_job_desc_msg_create_from_opts(opt_t *opt_local)
+static job_desc_msg_t *_job_desc_msg_create_from_opts(srun_opt_t *opt_local)
 {
 	job_desc_msg_t *j = xmalloc(sizeof(*j));
 	hostlist_t hl = NULL;
@@ -1136,7 +1136,7 @@ job_desc_msg_destroy(job_desc_msg_t *j)
 	}
 }
 
-extern int create_job_step(srun_job_t *job, bool use_all_cpus, opt_t *opt_local)
+extern int create_job_step(srun_job_t *job, bool use_all_cpus, srun_opt_t *opt_local)
 {
 	return launch_g_create_job_step(job, use_all_cpus,
 					_signal_while_allocating,

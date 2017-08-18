@@ -48,19 +48,19 @@
 #include "src/common/xsignal.h"
 
 typedef struct {
-	int (*setup_srun_opt)      (char **rest, opt_t *opt_local);
-	int (*handle_multi_prog)   (int command_pos, opt_t *opt_local);
+	int (*setup_srun_opt)      (char **rest, srun_opt_t *opt_local);
+	int (*handle_multi_prog)   (int command_pos, srun_opt_t *opt_local);
 	int (*create_job_step)     (srun_job_t *job, bool use_all_cpus,
 				    void (*signal_function)(int),
 				    sig_atomic_t *destroy_job,
-				    opt_t *opt_local);
+				    srun_opt_t *opt_local);
 	int (*step_launch)         (srun_job_t *job,
 				    slurm_step_io_fds_t *cio_fds,
 				    uint32_t *global_rc,
 				    slurm_step_launch_callbacks_t *
-				    step_callbacks, opt_t *opt_local);
+				    step_callbacks, srun_opt_t *opt_local);
 	int (*step_wait)           (srun_job_t *job, bool got_alloc,
-				    opt_t *opt_local);
+				    srun_opt_t *opt_local);
 	int (*step_terminate)      (void);
 	void (*print_status)       (void);
 	void (*fwd_signal)         (int signal);
@@ -162,7 +162,7 @@ extern slurm_step_layout_t *launch_common_get_slurm_step_layout(srun_job_t *job)
 extern int launch_common_create_job_step(srun_job_t *job, bool use_all_cpus,
 					 void (*signal_function)(int),
 					 sig_atomic_t *destroy_job,
-					 opt_t *opt_local)
+					 srun_opt_t *opt_local)
 {
 	int i, j, rc;
 	unsigned long step_wait = 0;
@@ -406,7 +406,7 @@ extern int launch_common_create_job_step(srun_job_t *job, bool use_all_cpus,
 
 extern void launch_common_set_stdio_fds(srun_job_t *job,
 					slurm_step_io_fds_t *cio_fds,
-					opt_t *opt_local)
+					srun_opt_t *opt_local)
 {
 	bool err_shares_out = false;
 	int file_flags;
@@ -492,7 +492,7 @@ extern void launch_common_set_stdio_fds(srun_job_t *job,
 	}
 }
 
-extern int launch_g_setup_srun_opt(char **rest, opt_t *opt_local)
+extern int launch_g_setup_srun_opt(char **rest, srun_opt_t *opt_local)
 {
 	if (launch_init() < 0)
 		return SLURM_ERROR;
@@ -500,7 +500,8 @@ extern int launch_g_setup_srun_opt(char **rest, opt_t *opt_local)
 	return (*(ops.setup_srun_opt))(rest, opt_local);
 }
 
-extern int launch_g_handle_multi_prog_verify(int command_pos, opt_t *opt_local)
+extern int launch_g_handle_multi_prog_verify(int command_pos,
+					     srun_opt_t *opt_local)
 {
 	if (launch_init() < 0)
 		return 0;
@@ -510,7 +511,8 @@ extern int launch_g_handle_multi_prog_verify(int command_pos, opt_t *opt_local)
 
 extern int launch_g_create_job_step(srun_job_t *job, bool use_all_cpus,
 				    void (*signal_function)(int),
-				    sig_atomic_t *destroy_job, opt_t *opt_local)
+				    sig_atomic_t *destroy_job,
+				    srun_opt_t *opt_local)
 {
 	if (launch_init() < 0)
 		return SLURM_ERROR;
@@ -522,7 +524,7 @@ extern int launch_g_create_job_step(srun_job_t *job, bool use_all_cpus,
 extern int launch_g_step_launch(srun_job_t *job, slurm_step_io_fds_t *cio_fds,
 				uint32_t *global_rc,
 				slurm_step_launch_callbacks_t *step_callbacks,
-				opt_t *opt_local)
+				srun_opt_t *opt_local)
 {
 	if (launch_init() < 0)
 		return SLURM_ERROR;
@@ -531,7 +533,8 @@ extern int launch_g_step_launch(srun_job_t *job, slurm_step_io_fds_t *cio_fds,
 				    opt_local);
 }
 
-extern int launch_g_step_wait(srun_job_t *job, bool got_alloc, opt_t *opt_local)
+extern int launch_g_step_wait(srun_job_t *job, bool got_alloc,
+			      srun_opt_t *opt_local)
 {
 	if (launch_init() < 0)
 		return SLURM_ERROR;

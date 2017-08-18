@@ -111,7 +111,7 @@ typedef struct _launch_app_data
 {
 	bool		got_alloc;
 	srun_job_t *	job;
-	opt_t *		opt_local;
+	srun_opt_t *	opt_local;
 	int *		step_cnt;
 	pthread_cond_t *step_cond;
 	pthread_mutex_t *step_mutex;
@@ -120,7 +120,7 @@ typedef struct _launch_app_data
 /*
  * forward declaration of static funcs
  */
-static int   _file_bcast(opt_t *opt_local, srun_job_t *job);
+static int   _file_bcast(srun_opt_t *opt_local, srun_job_t *job);
 static void  _launch_app(srun_job_t *job, List srun_job_list, bool got_alloc);
 static void *_launch_one_app(void *data);
 static void  _pty_restore(void);
@@ -129,7 +129,7 @@ static void  _set_node_alias(void);
 static void  _setup_env_working_cluster(void);
 static void  _setup_job_env(srun_job_t *job, List srun_job_list,
 			    bool got_alloc);
-static void  _setup_one_job_env(opt_t *opt_local, srun_job_t *job,
+static void  _setup_one_job_env(srun_opt_t *opt_local, srun_job_t *job,
 				bool got_alloc);
 static int   _slurm_debug_env_val (void);
 static char *_uint16_array_to_str(int count, const uint16_t *array);
@@ -168,10 +168,11 @@ static bool _enable_pack_steps(void)
 
 int srun(int ac, char **av)
 {
-	int debug_level;
+	int debug_level, rc;
 	log_options_t logopt = LOG_OPTS_STDERR_ONLY;
 	bool got_alloc = false;
 	List srun_job_list = NULL;
+	char *cli_err_msg = NULL;
 
 	slurm_conf_init(NULL);
 	debug_level = _slurm_debug_env_val();
@@ -225,7 +226,7 @@ static void *_launch_one_app(void *data)
 	static bool            launch_begin = false;
 	static bool            launch_fini  = false;
 	_launch_app_data_t *opts = (_launch_app_data_t *) data;
-	opt_t *opt_local = opts->opt_local;
+	srun_opt_t *opt_local = opts->opt_local;
 	srun_job_t *job  = opts->job;
 	bool got_alloc   = opts->got_alloc;
 	slurm_step_io_fds_t cio_fds = SLURM_STEP_IO_FDS_INITIALIZER;
@@ -277,7 +278,7 @@ relaunch:
 static void _launch_app(srun_job_t *job, List srun_job_list, bool got_alloc)
 {
 	ListIterator opt_iter, job_iter;
-	opt_t *opt_local = NULL;
+	srun_opt_t *opt_local = NULL;
 	_launch_app_data_t *opts;
 	int total_ntasks = 0, step_cnt = 0;
 	pthread_mutex_t step_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -311,7 +312,7 @@ static void _launch_app(srun_job_t *job, List srun_job_list, bool got_alloc)
 		}
 
 		opt_iter = list_iterator_create(opt_list);
-		while ((opt_local = (opt_t *) list_next(opt_iter))) {
+		while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 			job = (srun_job_t *) list_next(job_iter);
 			if (!job) {
 				slurm_mutex_lock(&step_mutex);
@@ -364,7 +365,7 @@ static void _launch_app(srun_job_t *job, List srun_job_list, bool got_alloc)
 	}
 }
 
-static void _setup_one_job_env(opt_t *opt_local, srun_job_t *job,
+static void _setup_one_job_env(srun_opt_t *opt_local, srun_job_t *job,
 			       bool got_alloc)
 {
 	env_t *env = xmalloc(sizeof(env_t));
@@ -467,7 +468,7 @@ static void _setup_one_job_env(opt_t *opt_local, srun_job_t *job,
 static void _setup_job_env(srun_job_t *job, List srun_job_list, bool got_alloc)
 {
 	ListIterator opt_iter, job_iter;
-	opt_t *opt_local;
+	srun_opt_t *opt_local;
 
 	if (srun_job_list) {
 		srun_job_t *first_job = list_peek(srun_job_list);
@@ -479,7 +480,7 @@ static void _setup_job_env(srun_job_t *job, List srun_job_list, bool got_alloc)
 		}
 		job_iter  = list_iterator_create(srun_job_list);
 		opt_iter  = list_iterator_create(opt_list);
-		while ((opt_local = (opt_t *) list_next(opt_iter))) {
+		while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 			job = (srun_job_t *) list_next(job_iter);
 			if (!job) {
 				if (first_job) {
@@ -501,7 +502,7 @@ static void _setup_job_env(srun_job_t *job, List srun_job_list, bool got_alloc)
 	}
 }
 
-static int _file_bcast(opt_t *opt_local, srun_job_t *job)
+static int _file_bcast(srun_opt_t *opt_local, srun_job_t *job)
 {
 	struct bcast_parameters *params;
 	int rc;
