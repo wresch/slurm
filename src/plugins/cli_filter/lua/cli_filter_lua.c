@@ -102,91 +102,104 @@ static const struct luaL_Reg slurm_functions [] = {
 };
 
 struct option_string;
-static bool _lua_pushstring(void *data, const char *name,
+static bool _push_string(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
-static bool _lua_pushbool(void *data, const char *name,
+static bool _push_bool(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
-static bool _lua_pushint(void *data, const char *name,
+static bool _push_int(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
-static bool _lua_pushint32_t(void *data, const char *name,
+static bool _push_int32_t(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
-static bool _lua_pushuid(void *data, const char *name,
+static bool _push_uid(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
-static bool _lua_pushgid(void *data, const char *name,
+static bool _push_gid(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
-static bool _lua_pushstringarray(void *data, const char *name,
+static bool _push_stringarray(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
 
-
+static bool _write_string(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _write_bool(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _write_int(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _write_int32_t(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _write_uid(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _write_gid(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
 
 struct option_string {
 	char *name;
 	size_t offset;
-	bool (*func)(void *, const char *, const struct option_string *,
-		    lua_State *);
+	bool (*read)(void *, const char *, const struct option_string *,
+			lua_State *);
+	bool (*write)(void *, int, const char *, const struct option_string *,
+			lua_State *);
 };
 
 static struct option_string salloc_opt_names[] = {
-	{ "progname", offsetof(salloc_opt_t, progname), _lua_pushstring },
-	{ "user",     offsetof(salloc_opt_t, user), _lua_pushstring },
-	{ "uid",      offsetof(salloc_opt_t, uid), _lua_pushuid },
-	{ "gid",      offsetof(salloc_opt_t, gid), _lua_pushgid },
-	{ "euid",     offsetof(salloc_opt_t, euid), _lua_pushuid },
-	{ "egid",     offsetof(salloc_opt_t, egid), _lua_pushgid },
-	{ "cwd",      offsetof(salloc_opt_t, cwd), _lua_pushstring },
-	{ "ntasks",   offsetof(salloc_opt_t, ntasks), _lua_pushint },
-	{ "ntasks_set", offsetof(salloc_opt_t, ntasks_set), _lua_pushbool },
-	{ "cpus_per_task", offsetof(salloc_opt_t, cpus_per_task), _lua_pushint },
-	{ "cpus_per_task_set", offsetof(salloc_opt_t, cpus_set), _lua_pushbool },
-	{ "min_nodes", offsetof(salloc_opt_t, min_nodes), _lua_pushint },
-	{ "max_nodes", offsetof(salloc_opt_t, max_nodes), _lua_pushint },
-	{ "nodes_set", offsetof(salloc_opt_t, nodes_set), _lua_pushbool },
-	{ NULL, 0, NULL }
+	{ "progname", offsetof(salloc_opt_t, progname), _push_string, NULL },
+	{ "user",     offsetof(salloc_opt_t, user), _push_string, NULL },
+	{ "uid",      offsetof(salloc_opt_t, uid), _push_uid, NULL },
+	{ "gid",      offsetof(salloc_opt_t, gid), _push_gid, NULL },
+	{ "euid",     offsetof(salloc_opt_t, euid), _push_uid, NULL },
+	{ "egid",     offsetof(salloc_opt_t, egid), _push_gid, NULL },
+	{ "cwd",      offsetof(salloc_opt_t, cwd), _push_string, _write_string },
+	{ "ntasks",   offsetof(salloc_opt_t, ntasks), _push_int, _write_int },
+	{ "ntasks_set", offsetof(salloc_opt_t, ntasks_set), _push_bool, _write_bool },
+	{ "cpus_per_task", offsetof(salloc_opt_t, cpus_per_task), _push_int, _write_int },
+	{ "cpus_per_task_set", offsetof(salloc_opt_t, cpus_set), _push_bool, _write_bool },
+	{ "min_nodes", offsetof(salloc_opt_t, min_nodes), _push_int, _write_int },
+	{ "max_nodes", offsetof(salloc_opt_t, max_nodes), _push_int, _write_int },
+	{ "nodes_set", offsetof(salloc_opt_t, nodes_set), _push_bool, _write_bool },
+	{ NULL, 0, NULL, NULL }
 };
 
 static struct option_string sbatch_opt_names[] = {
-	{ "clusters", offsetof(sbatch_opt_t, clusters), _lua_pushstring },
-	{ "progname", offsetof(sbatch_opt_t, progname), _lua_pushstring },
-	{ "argc", offsetof(sbatch_opt_t, script_argc), _lua_pushint },
-	{ "argv", offsetof(sbatch_opt_t, script_argv), _lua_pushstringarray },
-	{ "user",     offsetof(sbatch_opt_t, user), _lua_pushstring },
-	{ "uid",      offsetof(sbatch_opt_t, uid), _lua_pushuid },
-	{ "gid",      offsetof(sbatch_opt_t, gid), _lua_pushgid },
-	{ "euid",     offsetof(sbatch_opt_t, euid), _lua_pushuid },
-	{ "egid",     offsetof(sbatch_opt_t, egid), _lua_pushgid },
-	{ "cwd",   offsetof(sbatch_opt_t, cwd), _lua_pushstring },
-	{ "ntasks",   offsetof(sbatch_opt_t, ntasks), _lua_pushint },
-	{ "ntasks_set", offsetof(sbatch_opt_t, ntasks_set), _lua_pushbool },
-	{ "cpus_per_task", offsetof(sbatch_opt_t, cpus_per_task), _lua_pushint },
-	{ "cpus_per_task_set", offsetof(sbatch_opt_t, cpus_set), _lua_pushbool },
-	{ "min_nodes", offsetof(sbatch_opt_t, min_nodes), _lua_pushint },
-	{ "max_nodes", offsetof(sbatch_opt_t, max_nodes), _lua_pushint },
-	{ "nodes_set", offsetof(sbatch_opt_t, nodes_set), _lua_pushbool },
-	{ NULL, 0, NULL }
+	{ "clusters", offsetof(sbatch_opt_t, clusters), _push_string, _write_string },
+	{ "progname", offsetof(sbatch_opt_t, progname), _push_string, NULL },
+	{ "argc", offsetof(sbatch_opt_t, script_argc), _push_int, _write_int },
+	{ "argv", offsetof(sbatch_opt_t, script_argv), _push_stringarray, NULL },
+	{ "user",     offsetof(sbatch_opt_t, user), _push_string, NULL },
+	{ "uid",      offsetof(sbatch_opt_t, uid), _push_uid, NULL },
+	{ "gid",      offsetof(sbatch_opt_t, gid), _push_gid, NULL },
+	{ "euid",     offsetof(sbatch_opt_t, euid), _push_uid, NULL },
+	{ "egid",     offsetof(sbatch_opt_t, egid), _push_gid, NULL },
+	{ "cwd",   offsetof(sbatch_opt_t, cwd), _push_string, _write_string },
+	{ "ntasks",   offsetof(sbatch_opt_t, ntasks), _push_int, _write_int },
+	{ "ntasks_set", offsetof(sbatch_opt_t, ntasks_set), _push_bool, _write_bool },
+	{ "cpus_per_task", offsetof(sbatch_opt_t, cpus_per_task), _push_int, _write_int },
+	{ "cpus_per_task_set", offsetof(sbatch_opt_t, cpus_set), _push_bool, _write_bool },
+	{ "min_nodes", offsetof(sbatch_opt_t, min_nodes), _push_int, _write_int },
+	{ "max_nodes", offsetof(sbatch_opt_t, max_nodes), _push_int, _write_int },
+	{ "nodes_set", offsetof(sbatch_opt_t, nodes_set), _push_bool, _write_bool },
+	{ NULL, 0, NULL, NULL }
 };
 
 static struct option_string srun_opt_names[] = {
-	{ "progname", offsetof(srun_opt_t, progname), _lua_pushstring },
-	{ "multi_prog", offsetof(srun_opt_t, multi_prog), _lua_pushbool },
-	{ "multi_prog_cmds", offsetof(srun_opt_t, multi_prog_cmds), _lua_pushint32_t },
-	{ "argc", offsetof(srun_opt_t, argc), _lua_pushint },
-	{ "argv", offsetof(srun_opt_t, argv), _lua_pushstringarray },
-	{ "user",     offsetof(srun_opt_t, user), _lua_pushstring },
-	{ "uid",      offsetof(srun_opt_t, uid), _lua_pushuid },
-	{ "gid",      offsetof(srun_opt_t, gid), _lua_pushgid },
-	{ "euid",     offsetof(srun_opt_t, euid), _lua_pushuid },
-	{ "egid",     offsetof(srun_opt_t, egid), _lua_pushgid },
-	{ "cwd",   offsetof(srun_opt_t, cwd), _lua_pushstring },
-	{ "cwd_set",   offsetof(srun_opt_t, cwd_set), _lua_pushbool },
-	{ "ntasks",   offsetof(srun_opt_t, ntasks), _lua_pushint },
-	{ "ntasks_set", offsetof(srun_opt_t, ntasks_set), _lua_pushbool },
-	{ "cpus_per_task", offsetof(srun_opt_t, cpus_per_task), _lua_pushint },
-	{ "cpus_per_task_set", offsetof(srun_opt_t, cpus_set), _lua_pushbool },
-	{ "max_threads", offsetof(srun_opt_t, max_threads), _lua_pushint32_t },
-	{ "min_nodes", offsetof(srun_opt_t, min_nodes), _lua_pushint },
-	{ "max_nodes", offsetof(srun_opt_t, max_nodes), _lua_pushint },
-	{ "nodes_set", offsetof(srun_opt_t, nodes_set), _lua_pushbool },
-	{ NULL, 0, NULL }
+	{ "progname", offsetof(srun_opt_t, progname), _push_string, NULL },
+	{ "multi_prog", offsetof(srun_opt_t, multi_prog), _push_bool, NULL },
+	{ "multi_prog_cmds", offsetof(srun_opt_t, multi_prog_cmds), _push_int32_t, NULL },
+	{ "argc", offsetof(srun_opt_t, argc), _push_int, _write_int },
+	{ "argv", offsetof(srun_opt_t, argv), _push_stringarray, NULL },
+	{ "user",     offsetof(srun_opt_t, user), _push_string, NULL },
+	{ "uid",      offsetof(srun_opt_t, uid), _push_uid, NULL },
+	{ "gid",      offsetof(srun_opt_t, gid), _push_gid, NULL },
+	{ "euid",     offsetof(srun_opt_t, euid), _push_uid, NULL },
+	{ "egid",     offsetof(srun_opt_t, egid), _push_gid, NULL },
+	{ "cwd",   offsetof(srun_opt_t, cwd), _push_string, _write_string },
+	{ "cwd_set",   offsetof(srun_opt_t, cwd_set), _push_bool, _write_bool },
+	{ "ntasks",   offsetof(srun_opt_t, ntasks), _push_int, _write_int },
+	{ "ntasks_set", offsetof(srun_opt_t, ntasks_set), _push_bool, _write_bool },
+	{ "cpus_per_task", offsetof(srun_opt_t, cpus_per_task), _push_int, _write_int },
+	{ "cpus_per_task_set", offsetof(srun_opt_t, cpus_set), _push_bool, _write_bool },
+	{ "max_threads", offsetof(srun_opt_t, max_threads), _push_int32_t, _write_int32_t },
+	{ "min_nodes", offsetof(srun_opt_t, min_nodes), _push_int, _write_int },
+	{ "max_nodes", offsetof(srun_opt_t, max_nodes), _push_int, _write_int },
+	{ "nodes_set", offsetof(srun_opt_t, nodes_set), _push_bool, _write_bool },
+	{ NULL, 0, NULL, NULL }
 };
 
 /*
@@ -229,18 +242,35 @@ const struct option_string *find_opt_str(const char *name,
 	return NULL;
 }
 
-static bool _lua_pushstring(void *data, const char *name,
+static bool _push_string(void *data, const char *name,
 			    const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
 		return false;
 
 	char **tgt = (char **) (data + opt_str->offset);
+	fprintf(stderr, "read: data:%x, offset: %x, %s has %s\n", data, opt_str->offset, name, *tgt);
 	lua_pushstring(L, *tgt);
 	return true;
 }
 
-static bool _lua_pushbool(void *data, const char *name,
+static bool _write_string(void *data, int idx, const char *name,
+			    const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	char **tgt = (char **) (data + opt_str->offset);
+	char *str = luaL_checkstring(L, idx);
+
+	fprintf(stderr, "data:%x, offset: %x, %s to be replaced: %s, with: %s\n", data, opt_str->offset, name, *tgt, str);
+	xfree(*tgt);
+	if (str)
+		*tgt = xstrdup(str);
+	return true;
+}
+
+static bool _push_bool(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
@@ -250,7 +280,13 @@ static bool _lua_pushbool(void *data, const char *name,
 	return true;
 }
 
-static bool _lua_pushint(void *data, const char *name,
+static bool _write_bool(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	return false;
+}
+
+static bool _push_int(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
@@ -260,7 +296,13 @@ static bool _lua_pushint(void *data, const char *name,
 	return true;
 }
 
-static bool _lua_pushint32_t(void *data, const char *name,
+static bool _write_int(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	return false;
+}
+
+static bool _push_int32_t(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
@@ -270,7 +312,13 @@ static bool _lua_pushint32_t(void *data, const char *name,
 	return true;
 }
 
-static bool _lua_pushuid(void *data, const char *name,
+static bool _write_int32_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	return false;
+}
+
+static bool _push_uid(void *data, const char *name,
 			   const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
@@ -280,7 +328,13 @@ static bool _lua_pushuid(void *data, const char *name,
 	return true;
 }
 
-static bool _lua_pushgid(void *data, const char *name,
+static bool _write_uid(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	return false;
+}
+
+static bool _push_gid(void *data, const char *name,
 			   const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
@@ -289,6 +343,13 @@ static bool _lua_pushgid(void *data, const char *name,
 	lua_pushnumber(L, *tgt);
 	return true;
 }
+
+static bool _write_gid(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	return false;
+}
+
 
 static int _stringarray_field_index(lua_State *L)
 {
@@ -310,7 +371,7 @@ static int _stringarray_field_index(lua_State *L)
 	return 1;
 }
 
-static bool _lua_pushstringarray(void *data, const char *name,
+static bool _push_stringarray(void *data, const char *name,
 			   const struct option_string *opt_str, lua_State *L)
 {
 	if (!data || !name || !opt_str || !L)
@@ -352,9 +413,10 @@ static int _get_option_field_index(lua_State *L)
 	opt_str = lua_touserdata(L, -1);
 	lua_getfield(L, -2, "_opt_data");
 	data = lua_touserdata(L, -1);
+fprintf(stderr, "_get_option_field_index: _opt_str: %x, _opt_data: %x\n", opt_str, data);
 
 	req_option = find_opt_str(name, opt_str);
-	if ((req_option->func)(data, name, req_option, L))
+	if ((req_option->read)(data, name, req_option, L))
 		return 1;
 
 	return 0;
@@ -368,12 +430,19 @@ static int _set_option_field(lua_State *L)
 	void *data = NULL;
 
 	name = luaL_checkstring(L, 2);
-	lua_getmetatable(L, -2);
+	lua_getmetatable(L, -3);
 	lua_getfield(L, -1, "_opt_str");
 	opt_str = lua_touserdata(L, -1);
-	lua_getfield(L, -1, "_opt_data");
+	lua_getfield(L, -2, "_opt_data");
 	data = lua_touserdata(L, -1);
-	
+fprintf(stderr, "_set_option_field: _opt_str: %x, _opt_data: %x\n", opt_str, data);
+
+	req_option = find_opt_str(name, opt_str);
+	if (!(req_option->write))
+		return 0;
+	if ((req_option->write)(data, 3, name, req_option, L))
+		return 1;
+
 	return 0;
 }
 
