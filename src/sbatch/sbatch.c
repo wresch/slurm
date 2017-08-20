@@ -146,6 +146,15 @@ int main(int argc, char **argv)
 		if (opt.burst_buffer_file)
 			_add_bb_to_script(&script_body, opt.burst_buffer_file);
 
+		/* run cli_filter pre_submit */
+		rc = cli_filter_plugin_pre_submit(CLI_SBATCH, (void *) &opt,
+			&cli_err_msg);
+		if (rc != SLURM_SUCCESS) {
+			/* TODO print out cli_err_msg */
+			exit(error_exit);
+		}
+
+
 		if (spank_init_post_opt() < 0) {
 			error("Plugin stack post-option processing failed");
 			exit(error_exit);
@@ -221,14 +230,6 @@ int main(int argc, char **argv)
 			print_db_notok(opt.clusters, 0);
 			exit(error_exit);
 		}
-	}
-
-	/* run cli_filter pre_submit */
-	rc = cli_filter_plugin_pre_submit(CLI_SBATCH, (void *) &opt,
-		&cli_err_msg);
-	if (rc != SLURM_SUCCESS) {
-		/* TODO print out cli_err_msg */
-		exit(error_exit);
 	}
 
 	if (job_req_list && is_alps_cray_system()) {
