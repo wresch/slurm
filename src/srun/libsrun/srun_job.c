@@ -979,7 +979,7 @@ extern void create_srun_job(void **p_job, bool *got_alloc,
 		max_pack_offset = list_count(job_resp_list) - 1;
 		if (opt_list) {
 			opt_iter = list_iterator_create(opt_list);
-			while ((opt_local = (opt_t *) list_next(opt_iter))) {
+			while ((opt_local = (srun_opt_t *) list_next(opt_iter))) {
 				if (opt_local->pack_grp_bits) {
 					i = bit_fls(opt_local->pack_grp_bits);
 					max_list_offset = MAX(max_list_offset,
