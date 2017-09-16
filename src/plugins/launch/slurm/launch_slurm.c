@@ -630,7 +630,7 @@ static void _task_state_del(void *x)
 /*
  * Return only after all pack job components reach this point (or timeout)
  */
-static void _wait_all_pack_started(opt_t *opt_local)
+static void _wait_all_pack_started(srun_opt_t *opt_local)
 {
 	static int start_cnt = 0;
 	static int total_cnt = -1;

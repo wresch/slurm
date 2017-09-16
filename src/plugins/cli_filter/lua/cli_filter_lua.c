@@ -528,7 +528,6 @@ static struct option_string srun_opt_names[] = {
 	{ "deadline", offsetof(srun_opt_t, deadline), _push_time_t, _write_time_t },
 	{ "job_flags", offsetof(srun_opt_t, job_flags), _push_uint32_t, _write_uint32_t },
 	{ "delay_boot", offsetof(srun_opt_t, delay_boot), _push_uint32_t, _write_uint32_t },
-	{ "mpi_combine", offsetof(srun_opt_t, mpi_combine), _push_bool, _write_bool },
 	{ "pack_group", offsetof(srun_opt_t, pack_group), _push_string, _write_string },
 	{ "pack_step_cnt", offsetof(srun_opt_t, pack_step_cnt), _push_int, _write_int },
 	{ NULL, 0, NULL, NULL }
