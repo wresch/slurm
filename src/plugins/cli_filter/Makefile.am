@@ -2,4 +2,5 @@
 
 SUBDIRS = \
         defaults \
-	lua
+	lua \
+	user_defaults

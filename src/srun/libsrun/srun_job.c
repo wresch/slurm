@@ -69,6 +69,7 @@
 #include "src/common/xmalloc.h"
 #include "src/common/xsignal.h"
 #include "src/common/xstring.h"
+#include "src/common/cli_filter.h"
 
 #include "src/api/step_launch.h"
 
@@ -576,8 +577,9 @@ extern void init_srun(int argc, char **argv,
 		      bool handle_signals)
 {
 	bool pack_fini = false;
-	int i, pack_argc, pack_inx, pack_argc_off;
+	int i, pack_argc, pack_inx, pack_argc_off, rc;
 	char **pack_argv;
+	char *cli_err_msg = NULL;
 
 	/*
 	 * This must happen before we spawn any threads
@@ -597,6 +599,14 @@ extern void init_srun(int argc, char **argv,
 		error("Plug-in initialization failed");
 		exit(error_exit);
 	}
+
+	/* run cli_filter setup_defaults */
+	rc = cli_filter_plugin_setup_defaults(CLI_SRUN, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* do something to exit */
+	}
+
 
 	/*
 	 * Be sure to call spank_fini when srun exits.
@@ -654,6 +664,14 @@ extern void init_srun(int argc, char **argv,
 	_set_prio_process_env();
 	(void) _set_umask_env();
 	_set_submit_dir_env();
+
+	/* run cli_filter pre_submit */
+	rc = cli_filter_plugin_pre_submit(CLI_SRUN, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* do something to exit */
+	}
+
 
 	/*
 	 * Set up slurmctld message handler

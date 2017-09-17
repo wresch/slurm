@@ -212,6 +212,14 @@ int main(int argc, char **argv)
 	if (atexit((void (*) (void)) spank_fini) < 0)
 		error("Failed to register atexit handler for plugins: %m");
 
+	/* run cli_filter setup_defaults */
+	rc = cli_filter_plugin_setup_defaults(CLI_SALLOC, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* TODO print out cli_err_msg */
+		exit(error_exit);
+	}
+
 
 	pack_argc = argc;
 	pack_argv = argv;
@@ -278,6 +286,14 @@ int main(int argc, char **argv)
 			_set_rlimits(env);
 		}
 
+		/* run cli_filter pre_submit */
+		rc = cli_filter_plugin_pre_submit(CLI_SALLOC, (void *) &opt,
+			&cli_err_msg);
+		if (rc != SLURM_SUCCESS) {
+			/* TODO print out cli_err_msg */
+			exit(error_exit);
+		}
+
 		if (desc && !job_req_list) {
 			job_req_list = list_create(NULL);
 			list_append(job_req_list, desc);
@@ -298,14 +314,6 @@ int main(int argc, char **argv)
 	_match_job_name(job_req_list, opt.job_name);
 	if (!job_req_list)
 		desc->bitflags &= (~JOB_SALLOC_FLAG);
-
-	/* run cli_filter pre_submit */
-	rc = cli_filter_plugin_pre_submit(CLI_SALLOC, (void *) &opt,
-		&cli_err_msg);
-	if (rc != SLURM_SUCCESS) {
-		/* TODO print out cli_err_msg */
-		exit(error_exit);
-	}
 
 	/*
 	 * Job control for interactive salloc sessions: only if ...

@@ -5,8 +5,7 @@ AUTOMAKE_OPTIONS = foreign
 PLUGIN_FLAGS = -module -avoid-version --export-dynamic
 
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src/common \
-	      -DDEFAULT_SCRIPT_DIR=\"$(sysconfdir)\" \
-	      -D_DEBUG_LUA
+	      -DDEFAULT_SCRIPT_DIR=\"$(sysconfdir)\"
 
 if HAVE_LUA
 pkglib_LTLIBRARIES = cli_filter_lua.la

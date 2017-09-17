@@ -189,12 +189,6 @@ int srun(int ac, char **av)
 	_setup_env_working_cluster();
 
 	init_srun(ac, av, &logopt, debug_level, 1);
-	/* run cli_filter pre_submit */
-	rc = cli_filter_plugin_pre_submit(CLI_SRUN, (void *) &opt,
-		&cli_err_msg);
-	if (rc != SLURM_SUCCESS) {
-		/* do something to exit */
-	}
 	if (opt_list) {
 		if (!_enable_pack_steps())
 			fatal("Job steps that span multiple components of a heterogeneous job are not currently supported");
@@ -231,8 +225,6 @@ static void *_launch_one_app(void *data)
 	bool got_alloc   = opts->got_alloc;
 	slurm_step_io_fds_t cio_fds = SLURM_STEP_IO_FDS_INITIALIZER;
 	slurm_step_launch_callbacks_t step_callbacks;
-	char *cli_err_msg = NULL;
-	int rc = 0;
 
 	memset(&step_callbacks, 0, sizeof(step_callbacks));
 	step_callbacks.step_signal = launch_g_fwd_signal;

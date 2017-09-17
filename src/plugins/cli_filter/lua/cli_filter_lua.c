@@ -103,32 +103,64 @@ static const struct luaL_Reg slurm_functions [] = {
 
 struct option_string;
 static bool _push_string(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _push_bool(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _push_int(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
+static bool _push_int64_t(void *data, const char *name,
+			const struct option_string *opt_str, lua_State *L);
 static bool _push_int32_t(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _push_uid(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _push_gid(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _push_stringarray(void *data, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 
 static bool _write_string(void *data, int idx, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _write_bool(void *data, int idx, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _write_int(void *data, int idx, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
+static bool _write_int64_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
 static bool _write_int32_t(void *data, int idx, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _write_uid(void *data, int idx, const char *name,
-			 const struct option_string *opt_str, lua_State *L);
+			const struct option_string *opt_str, lua_State *L);
 static bool _write_gid(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _push_uint(void *data, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _write_uint(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _push_long(void *data, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _write_long(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _push_uint64_t(void *data, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _write_uint64_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _push_uint32_t(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L);
+static bool _write_uint32_t(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _push_uint16_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _write_uint16_t(void *data, int idx, const char *name,
+			 const struct option_string *opt_str, lua_State *L);
+static bool _push_uint8_t(void *data, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _write_uint8_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _push_time_t(void *data, const char *name,
+			const struct option_string *opt_str, lua_State *L);
+static bool _write_time_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L);
 
 struct option_string {
 	char *name;
@@ -146,7 +178,6 @@ static struct option_string salloc_opt_names[] = {
 	{ "gid",      offsetof(salloc_opt_t, gid), _push_gid, NULL },
 	{ "euid",     offsetof(salloc_opt_t, euid), _push_uid, NULL },
 	{ "egid",     offsetof(salloc_opt_t, egid), _push_gid, NULL },
-	{ "cwd",      offsetof(salloc_opt_t, cwd), _push_string, _write_string },
 	{ "ntasks",   offsetof(salloc_opt_t, ntasks), _push_int, _write_int },
 	{ "ntasks_set", offsetof(salloc_opt_t, ntasks_set), _push_bool, _write_bool },
 	{ "cpus_per_task", offsetof(salloc_opt_t, cpus_per_task), _push_int, _write_int },
@@ -154,6 +185,87 @@ static struct option_string salloc_opt_names[] = {
 	{ "min_nodes", offsetof(salloc_opt_t, min_nodes), _push_int, _write_int },
 	{ "max_nodes", offsetof(salloc_opt_t, max_nodes), _push_int, _write_int },
 	{ "nodes_set", offsetof(salloc_opt_t, nodes_set), _push_bool, _write_bool },
+	{ "sockets_per_node", offsetof(salloc_opt_t, sockets_per_node), _push_int, _write_int },
+	{ "cores_per_socket", offsetof(salloc_opt_t, cores_per_socket), _push_int, _write_int },
+	{ "threads_per_core", offsetof(salloc_opt_t, threads_per_core), _push_int, _write_int },
+	{ "ntasks_per_node", offsetof(salloc_opt_t, ntasks_per_node), _push_int, _write_int },
+	{ "ntasks_per_socket", offsetof(salloc_opt_t, ntasks_per_socket), _push_int, _write_int },
+	{ "ntasks_per_core", offsetof(salloc_opt_t, ntasks_per_core), _push_int, _write_int },
+	{ "ntasks_per_core_set", offsetof(salloc_opt_t, ntasks_per_core_set), _push_bool, _write_bool },
+	{ "hint", offsetof(salloc_opt_t, hint_env), _push_string, _write_string },
+	{ "hint_set", offsetof(salloc_opt_t, hint_set), _push_bool, _write_bool },
+	/* explicitly skipping mem_bind options for now since they are more complicated */
+	{ "extra_set", offsetof(salloc_opt_t, extra_set), _push_bool, _write_bool },
+	{ "time_limit", offsetof(salloc_opt_t, time_limit), _push_int, _write_int },
+	{ "time_limit_str", offsetof(salloc_opt_t, time_limit_str), _push_string, _write_string },
+	{ "time_min", offsetof(salloc_opt_t, time_min), _push_int, _write_int },
+	{ "time_min_str", offsetof(salloc_opt_t, time_min_str), _push_string, _write_string },
+	{ "partition", offsetof(salloc_opt_t, partition), _push_string, _write_string },
+	/* explicitly skip distribution and plane, may require special handling */
+	{ "job_name", offsetof(salloc_opt_t, job_name), _push_string, _write_string},
+	{ "jobid", offsetof(salloc_opt_t, jobid), _push_uint, _write_uint },
+	{ "dependency", offsetof(salloc_opt_t, dependency), _push_string, _write_string },
+	{ "nice", offsetof(salloc_opt_t, nice), _push_int, _write_int },
+	{ "priority", offsetof(salloc_opt_t, priority), _push_uint32_t, _write_uint32_t },
+	{ "account", offsetof(salloc_opt_t, account), _push_string, _write_string },
+	{ "comment", offsetof(salloc_opt_t, comment), _push_string, _write_string },
+	{ "qos", offsetof(salloc_opt_t, qos), _push_string, _write_string },
+	{ "immediate", offsetof(salloc_opt_t, immediate), _push_int, _write_int },
+	{ "warn_flags", offsetof(salloc_opt_t, warn_flags), _push_uint16_t, _write_uint16_t },
+	{ "warn_signal", offsetof(salloc_opt_t, warn_signal), _push_uint16_t, _write_uint16_t },
+	{ "warn_time", offsetof(salloc_opt_t, warn_time), _push_uint16_t, _write_uint16_t },
+	{ "hold", offsetof(salloc_opt_t, hold), _push_bool, _write_bool },
+	{ "no_kill", offsetof(salloc_opt_t, no_kill), _push_bool, _write_bool },
+	{ "acctg_freq", offsetof(salloc_opt_t, acctg_freq), _push_string, _write_string },
+	{ "licenses", offsetof(salloc_opt_t, licenses), _push_string, _write_string },
+	{ "overcommit", offsetof(salloc_opt_t, overcommit), _push_bool, _write_bool },
+	{ "kill_command_signal", offsetof(salloc_opt_t, kill_command_signal), _push_int, _write_int },
+	{ "kill_command_signal_set", offsetof(salloc_opt_t, kill_command_signal_set), _push_bool, _write_bool },
+	{ "shared", offsetof(salloc_opt_t, shared), _push_uint16_t, _write_uint16_t},
+	{ "quiet", offsetof(salloc_opt_t, quiet), _push_int, _write_int },
+	{ "verbose", offsetof(salloc_opt_t, verbose), _push_int, _write_int },
+
+	/* constraint options */
+	{ "mincpus", offsetof(salloc_opt_t, mincpus), _push_int, _write_int },
+	{ "mem_per_cpu", offsetof(salloc_opt_t, mem_per_cpu), _push_int64_t, _write_int64_t },
+	{ "mem", offsetof(salloc_opt_t, realmem), _push_int64_t, _write_int64_t },
+	{ "tmpdisk", offsetof(salloc_opt_t, tmpdisk), _push_long, _write_long },
+	{ "constraints", offsetof(salloc_opt_t, constraints), _push_string, _write_string },
+	{ "cluster_constraints", offsetof(salloc_opt_t, c_constraints), _push_string, _write_string },
+	{ "gres", offsetof(salloc_opt_t, gres), _push_string, _write_string },
+	{ "contiguous", offsetof(salloc_opt_t, contiguous), _push_bool, _write_bool },
+	{ "nodelist", offsetof(salloc_opt_t, nodelist), _push_string, _write_string },
+	{ "exc_nodes", offsetof(salloc_opt_t, exc_nodes), _push_string, _write_string },
+	{ "network", offsetof(salloc_opt_t, network), _push_string, _write_string },
+
+	/* only bluegene reboot option for now */
+	{ "reboot", offsetof(salloc_opt_t, reboot), _push_bool, _write_bool },
+
+	/* remaining options */
+	{ "begin", offsetof(salloc_opt_t, begin), _push_time_t, _write_time_t },
+	{ "mail_type", offsetof(salloc_opt_t, mail_type), _push_uint16_t, _write_uint16_t },
+	{ "mail_user", offsetof(salloc_opt_t, mail_user), _push_string, _write_string },
+	/* skip bell for now */
+	{ "no_shell", offsetof(salloc_opt_t, no_shell), _push_bool, _write_bool },
+	{ "get_user_env_time", offsetof(salloc_opt_t, get_user_env_time), _push_int, _write_int },
+	{ "get_user_env_mode", offsetof(salloc_opt_t, get_user_env_mode), _push_int, _write_int },
+	{ "cwd", offsetof(salloc_opt_t, cwd), _push_string, _write_string },
+	{ "reservation", offsetof(salloc_opt_t, reservation), _push_string, _write_string },
+	{ "wait_all_nodes", offsetof(salloc_opt_t, wait_all_nodes), _push_uint16_t, _write_uint16_t },
+	{ "wckey", offsetof(salloc_opt_t, wckey), _push_string, _write_string },
+	{ "req_switch", offsetof(salloc_opt_t, req_switch), _push_int, _write_int },
+	{ "wait4switch", offsetof(salloc_opt_t, wait4switch), _push_int, _write_int },
+	/* skip spank env for the moment -- TODO SOON! */
+	{ "core_spec", offsetof(salloc_opt_t, core_spec), _push_int, _write_int },
+	{ "burst_buffer", offsetof(salloc_opt_t, burst_buffer), _push_string, _write_string },
+	{ "cpu_freq_min", offsetof(salloc_opt_t, cpu_freq_min), _push_uint32_t, _write_uint32_t },
+	{ "cpu_freq_max", offsetof(salloc_opt_t, cpu_freq_max), _push_uint32_t, _write_uint32_t },
+	{ "cpu_freq_gov", offsetof(salloc_opt_t, cpu_freq_gov), _push_uint32_t, _write_uint32_t },
+	{ "power_flags", offsetof(salloc_opt_t, power_flags), _push_uint8_t, _write_uint8_t },
+	{ "mcs_label", offsetof(salloc_opt_t, mcs_label), _push_string, _write_string },
+	{ "deadline", offsetof(salloc_opt_t, deadline), _push_time_t, _write_time_t },
+	{ "job_flags", offsetof(salloc_opt_t, job_flags), _push_uint32_t, _write_uint32_t },
+	{ "delay_boot", offsetof(salloc_opt_t, delay_boot), _push_uint32_t, _write_uint32_t },
 	{ NULL, 0, NULL, NULL }
 };
 
@@ -175,6 +287,103 @@ static struct option_string sbatch_opt_names[] = {
 	{ "min_nodes", offsetof(sbatch_opt_t, min_nodes), _push_int, _write_int },
 	{ "max_nodes", offsetof(sbatch_opt_t, max_nodes), _push_int, _write_int },
 	{ "nodes_set", offsetof(sbatch_opt_t, nodes_set), _push_bool, _write_bool },
+	{ "sockets_per_node", offsetof(sbatch_opt_t, sockets_per_node), _push_int, _write_int },
+	{ "cores_per_socket", offsetof(sbatch_opt_t, cores_per_socket), _push_int, _write_int },
+	{ "threads_per_core", offsetof(sbatch_opt_t, threads_per_core), _push_int, _write_int },
+	{ "ntasks_per_node", offsetof(sbatch_opt_t, ntasks_per_node), _push_int, _write_int },
+	{ "ntasks_per_socket", offsetof(sbatch_opt_t, ntasks_per_socket), _push_int, _write_int },
+	{ "ntasks_per_core", offsetof(sbatch_opt_t, ntasks_per_core), _push_int, _write_int },
+	{ "ntasks_per_core_set", offsetof(sbatch_opt_t, ntasks_per_core_set), _push_bool, _write_bool },
+	{ "hint", offsetof(sbatch_opt_t, hint_env), _push_string, _write_string },
+	{ "hint_set", offsetof(sbatch_opt_t, hint_set), _push_bool, _write_bool },
+	/* explicitly skipping mem_bind options for now since they are more complicated */
+	{ "extra_set", offsetof(sbatch_opt_t, extra_set), _push_bool, _write_bool },
+	{ "time_limit", offsetof(sbatch_opt_t, time_limit), _push_int, _write_int },
+	{ "time_limit_str", offsetof(sbatch_opt_t, time_limit_str), _push_string, _write_string },
+	{ "time_min", offsetof(sbatch_opt_t, time_min), _push_int, _write_int },
+	{ "time_min_str", offsetof(sbatch_opt_t, time_min_str), _push_string, _write_string },
+	{ "partition", offsetof(sbatch_opt_t, partition), _push_string, _write_string },
+	/* explicitly skip distribution and plane, may require special handling */
+	{ "job_name", offsetof(sbatch_opt_t, job_name), _push_string, _write_string},
+	{ "jobid", offsetof(sbatch_opt_t, jobid), _push_uint, _write_uint },
+	{ "jobid_set", offsetof(sbatch_opt_t, jobid_set), _push_bool, _write_bool },
+	{ "mpi_type", offsetof(sbatch_opt_t, mpi_type), _push_string, _write_string },
+	{ "dependency", offsetof(sbatch_opt_t, dependency), _push_string, _write_string },
+	{ "nice", offsetof(sbatch_opt_t, nice), _push_int, _write_int },
+	{ "priority", offsetof(sbatch_opt_t, priority), _push_uint32_t, _write_uint32_t },
+	{ "account", offsetof(sbatch_opt_t, account), _push_string, _write_string },
+	{ "comment", offsetof(sbatch_opt_t, comment), _push_string, _write_string },
+	{ "propagate", offsetof(sbatch_opt_t, propagate), _push_string, _write_string },
+	{ "qos", offsetof(sbatch_opt_t, qos), _push_string, _write_string },
+	{ "immediate", offsetof(sbatch_opt_t, immediate), _push_int, _write_int },
+	{ "warn_flags", offsetof(sbatch_opt_t, warn_flags), _push_uint16_t, _write_uint16_t },
+	{ "warn_signal", offsetof(sbatch_opt_t, warn_signal), _push_uint16_t, _write_uint16_t },
+	{ "warn_time", offsetof(sbatch_opt_t, warn_time), _push_uint16_t, _write_uint16_t },
+	{ "hold", offsetof(sbatch_opt_t, hold), _push_bool, _write_bool },
+	{ "parsable", offsetof(sbatch_opt_t, parsable), _push_bool, _write_bool },
+	{ "no_kill", offsetof(sbatch_opt_t, no_kill), _push_bool, _write_bool },
+	{ "requeue", offsetof(sbatch_opt_t, requeue), _push_int, _write_int },
+	{ "open_mode", offsetof(sbatch_opt_t, open_mode), _push_uint8_t, _write_uint8_t },
+	{ "acctg_freq", offsetof(sbatch_opt_t, acctg_freq), _push_string, _write_string },
+	{ "licenses", offsetof(sbatch_opt_t, licenses), _push_string, _write_string },
+	{ "network", offsetof(sbatch_opt_t, network), _push_string, _write_string },
+	{ "overcommit", offsetof(sbatch_opt_t, overcommit), _push_bool, _write_bool },
+	{ "shared", offsetof(sbatch_opt_t, shared), _push_uint16_t, _write_uint16_t},
+	{ "quiet", offsetof(sbatch_opt_t, quiet), _push_int, _write_int },
+	{ "verbose", offsetof(sbatch_opt_t, verbose), _push_int, _write_int },
+	{ "wait_all_nodes", offsetof(sbatch_opt_t, wait_all_nodes), _push_uint16_t, _write_uint16_t },
+	{ "wrap", offsetof(sbatch_opt_t, wrap), _push_uint16_t, _write_uint16_t },
+
+	/* constraint options */
+	{ "mincpus", offsetof(sbatch_opt_t, mincpus), _push_int, _write_int },
+	{ "minsockets", offsetof(sbatch_opt_t, minsockets), _push_int, _write_int },
+	{ "mincores", offsetof(sbatch_opt_t, mincores), _push_int, _write_int },
+	{ "minthreads", offsetof(sbatch_opt_t, minthreads), _push_int, _write_int },
+	{ "mem_per_cpu", offsetof(sbatch_opt_t, mem_per_cpu), _push_int64_t, _write_int64_t },
+	{ "mem", offsetof(sbatch_opt_t, realmem), _push_int64_t, _write_int64_t },
+	{ "tmpdisk", offsetof(sbatch_opt_t, tmpdisk), _push_long, _write_long },
+	{ "constraints", offsetof(sbatch_opt_t, constraints), _push_string, _write_string },
+	{ "cluster_constraints", offsetof(sbatch_opt_t, c_constraints), _push_string, _write_string },
+	{ "gres", offsetof(sbatch_opt_t, gres), _push_string, _write_string },
+	{ "contiguous", offsetof(sbatch_opt_t, contiguous), _push_bool, _write_bool },
+	{ "nodelist", offsetof(sbatch_opt_t, nodelist), _push_string, _write_string },
+	{ "exc_nodes", offsetof(sbatch_opt_t, exc_nodes), _push_string, _write_string },
+	/* only bluegene reboot option for now */
+	{ "reboot", offsetof(sbatch_opt_t, reboot), _push_bool, _write_bool },
+	/* remaining options */
+	{ "array_inx", offsetof(sbatch_opt_t, array_inx), _push_string, _write_string },
+	{ "begin", offsetof(sbatch_opt_t, begin), _push_time_t, _write_time_t },
+	{ "mail_type", offsetof(sbatch_opt_t, mail_type), _push_uint16_t, _write_uint16_t },
+	{ "mail_user", offsetof(sbatch_opt_t, mail_user), _push_string, _write_string },
+	{ "ofname", offsetof(sbatch_opt_t, ofname), _push_string, _write_string },
+	{ "ifname", offsetof(sbatch_opt_t, ifname), _push_string, _write_string },
+	{ "efname", offsetof(sbatch_opt_t, efname), _push_string, _write_string },
+	{ "get_user_env_time", offsetof(sbatch_opt_t, get_user_env_time), _push_int, _write_int },
+	{ "get_user_env_mode", offsetof(sbatch_opt_t, get_user_env_mode), _push_int, _write_int },
+	{ "export_env", offsetof(sbatch_opt_t, export_env), _push_string, _write_string },
+	{ "export_file", offsetof(sbatch_opt_t, export_file), _push_string, _write_string },
+	{ "wait", offsetof(sbatch_opt_t, wait), _push_bool, _write_bool },
+	{ "wait_all_nodes", offsetof(sbatch_opt_t, wait_all_nodes), _push_uint16_t, _write_uint16_t },
+	{ "wckey", offsetof(sbatch_opt_t, wckey), _push_string, _write_string },
+	{ "reservation", offsetof(sbatch_opt_t, reservation), _push_string, _write_string },
+	{ "ckpt_interval", offsetof(sbatch_opt_t, ckpt_interval), _push_int, _write_int },
+	{ "ckpt_interval_str", offsetof(sbatch_opt_t, ckpt_interval_str), _push_string, _write_string },
+	{ "ckpt_dir", offsetof(sbatch_opt_t, ckpt_dir), _push_string, _write_string },
+	{ "req_switch", offsetof(sbatch_opt_t, req_switch), _push_int, _write_int },
+	{ "wait4switch", offsetof(sbatch_opt_t, wait4switch), _push_int, _write_int },
+	/* skip spank env for the moment -- TODO SOON! */
+	{ "umask", offsetof(sbatch_opt_t, umask), _push_int, _write_int },
+	{ "core_spec", offsetof(sbatch_opt_t, core_spec), _push_int, _write_int },
+	{ "cpu_freq_min", offsetof(sbatch_opt_t, cpu_freq_min), _push_uint32_t, _write_uint32_t },
+	{ "cpu_freq_max", offsetof(sbatch_opt_t, cpu_freq_max), _push_uint32_t, _write_uint32_t },
+	{ "cpu_freq_gov", offsetof(sbatch_opt_t, cpu_freq_gov), _push_uint32_t, _write_uint32_t },
+	{ "test_only", offsetof(sbatch_opt_t, test_only), _push_bool, _write_bool },
+	{ "burst_buffer_file", offsetof(sbatch_opt_t, burst_buffer_file), _push_string, _write_string },
+	{ "power_flags", offsetof(sbatch_opt_t, power_flags), _push_uint8_t, _write_uint8_t },
+	{ "mcs_label", offsetof(sbatch_opt_t, mcs_label), _push_string, _write_string },
+	{ "deadline", offsetof(sbatch_opt_t, deadline), _push_time_t, _write_time_t },
+	{ "job_flags", offsetof(sbatch_opt_t, job_flags), _push_uint32_t, _write_uint32_t },
+	{ "delay_boot", offsetof(sbatch_opt_t, delay_boot), _push_uint32_t, _write_uint32_t },
 	{ NULL, 0, NULL, NULL }
 };
 
@@ -182,8 +391,6 @@ static struct option_string srun_opt_names[] = {
 	{ "progname", offsetof(srun_opt_t, progname), _push_string, NULL },
 	{ "multi_prog", offsetof(srun_opt_t, multi_prog), _push_bool, NULL },
 	{ "multi_prog_cmds", offsetof(srun_opt_t, multi_prog_cmds), _push_int32_t, NULL },
-	{ "argc", offsetof(srun_opt_t, argc), _push_int, _write_int },
-	{ "argv", offsetof(srun_opt_t, argv), _push_stringarray, NULL },
 	{ "user",     offsetof(srun_opt_t, user), _push_string, NULL },
 	{ "uid",      offsetof(srun_opt_t, uid), _push_uid, NULL },
 	{ "gid",      offsetof(srun_opt_t, gid), _push_gid, NULL },
@@ -199,6 +406,131 @@ static struct option_string srun_opt_names[] = {
 	{ "min_nodes", offsetof(srun_opt_t, min_nodes), _push_int, _write_int },
 	{ "max_nodes", offsetof(srun_opt_t, max_nodes), _push_int, _write_int },
 	{ "nodes_set", offsetof(srun_opt_t, nodes_set), _push_bool, _write_bool },
+	{ "sockets_per_node", offsetof(srun_opt_t, sockets_per_node), _push_int, _write_int },
+	{ "cores_per_socket", offsetof(srun_opt_t, cores_per_socket), _push_int, _write_int },
+	{ "threads_per_core", offsetof(srun_opt_t, threads_per_core), _push_int, _write_int },
+	{ "ntasks_per_node", offsetof(srun_opt_t, ntasks_per_node), _push_int, _write_int },
+	{ "ntasks_per_socket", offsetof(srun_opt_t, ntasks_per_socket), _push_int, _write_int },
+	{ "ntasks_per_core", offsetof(srun_opt_t, ntasks_per_core), _push_int, _write_int },
+	{ "ntasks_per_core_set", offsetof(srun_opt_t, ntasks_per_core_set), _push_bool, _write_bool },
+	{ "hint", offsetof(srun_opt_t, hint_env), _push_string, _write_string },
+	{ "hint_set", offsetof(srun_opt_t, hint_set), _push_bool, _write_bool },
+	/* explicitly skipping mem_bind options for now since they are more complicated */
+	{ "extra_set", offsetof(srun_opt_t, extra_set), _push_bool, _write_bool },
+	{ "time_limit", offsetof(srun_opt_t, time_limit), _push_int, _write_int },
+	{ "time_limit_str", offsetof(srun_opt_t, time_limit_str), _push_string, _write_string },
+	{ "time_min", offsetof(srun_opt_t, time_min), _push_int, _write_int },
+	{ "time_min_str", offsetof(srun_opt_t, time_min_str), _push_string, _write_string },
+	{ "ckpt_interval", offsetof(srun_opt_t, ckpt_interval), _push_int, _write_int },
+	{ "ckpt_interval_str", offsetof(srun_opt_t, ckpt_interval_str), _push_string, _write_string },
+	{ "ckpt_dir", offsetof(srun_opt_t, ckpt_dir), _push_string, _write_string },
+	{ "exclusive", offsetof(srun_opt_t, exclusive), _push_bool, _write_bool },
+	{ "compress", offsetof(srun_opt_t, compress), _push_uint16_t, _write_uint16_t },
+	{ "bcast_file", offsetof(srun_opt_t, bcast_file), _push_string, _write_string },
+	{ "bcast_flag", offsetof(srun_opt_t, bcast_flag), _push_bool, _write_bool },
+	{ "resv_port_cnt", offsetof(srun_opt_t, resv_port_cnt), _push_int, _write_int },
+	{ "partition", offsetof(srun_opt_t, partition), _push_string, _write_string },
+	/* explicitly skip distribution and plane, may require special handling */
+	{ "cmd_name", offsetof(srun_opt_t, cmd_name), _push_string, _write_string},
+	{ "job_name", offsetof(srun_opt_t, job_name), _push_string, _write_string},
+	{ "job_name_set_cmd", offsetof(srun_opt_t, job_name_set_cmd), _push_bool, _write_bool },
+	{ "job_name_set_env", offsetof(srun_opt_t, job_name_set_env), _push_bool, _write_bool },
+	{ "jobid", offsetof(srun_opt_t, jobid), _push_uint, _write_uint },
+	{ "jobid_set", offsetof(srun_opt_t, jobid_set), _push_bool, _write_bool },
+	{ "dependency", offsetof(srun_opt_t, dependency), _push_string, _write_string },
+	{ "nice", offsetof(srun_opt_t, nice), _push_int, _write_int },
+	{ "priority", offsetof(srun_opt_t, priority), _push_uint32_t, _write_uint32_t },
+	{ "account", offsetof(srun_opt_t, account), _push_string, _write_string },
+	{ "comment", offsetof(srun_opt_t, comment), _push_string, _write_string },
+	{ "qos", offsetof(srun_opt_t, qos), _push_string, _write_string },
+	{ "ofname", offsetof(srun_opt_t, ofname), _push_string, _write_string },
+	{ "ifname", offsetof(srun_opt_t, ifname), _push_string, _write_string },
+	{ "efname", offsetof(srun_opt_t, efname), _push_string, _write_string },
+	{ "slurmd_debug", offsetof(srun_opt_t, slurmd_debug), _push_int, _write_int },
+	{ "immediate", offsetof(srun_opt_t, immediate), _push_int, _write_int },
+	{ "warn_flags", offsetof(srun_opt_t, warn_flags), _push_uint16_t, _write_uint16_t },
+	{ "warn_signal", offsetof(srun_opt_t, warn_signal), _push_uint16_t, _write_uint16_t },
+	{ "warn_time", offsetof(srun_opt_t, warn_time), _push_uint16_t, _write_uint16_t },
+	{ "hold", offsetof(srun_opt_t, hold), _push_bool, _write_bool },
+	{ "hostfile", offsetof(srun_opt_t, hostfile), _push_string, _write_string },
+	{ "labelio", offsetof(srun_opt_t, labelio), _push_bool, _write_bool },
+	{ "unbuffered", offsetof(srun_opt_t, unbuffered), _push_bool, _write_bool },
+	{ "allocate", offsetof(srun_opt_t, allocate), _push_bool, _write_bool },
+	{ "noshell", offsetof(srun_opt_t, noshell), _push_bool, _write_bool },
+	{ "overcommit", offsetof(srun_opt_t, overcommit), _push_bool, _write_bool },
+	{ "no_kill", offsetof(srun_opt_t, no_kill), _push_bool, _write_bool },
+	{ "kill_bad_exit", offsetof(srun_opt_t, kill_bad_exit), _push_int32_t, _write_int32_t },
+	{ "shared", offsetof(srun_opt_t, shared), _push_uint16_t, _write_uint16_t},
+	{ "max_wait", offsetof(srun_opt_t, max_wait), _push_int, _write_int },
+	{ "quit_on_intr", offsetof(srun_opt_t, quit_on_intr), _push_bool, _write_bool },
+	{ "disable_status", offsetof(srun_opt_t, disable_status), _push_bool, _write_bool },
+	{ "quiet", offsetof(srun_opt_t, quiet), _push_int, _write_int },
+	{ "parallel_debug", offsetof(srun_opt_t, parallel_debug), _push_bool, _write_bool },
+	{ "debugger_test", offsetof(srun_opt_t, debugger_test), _push_bool, _write_bool },
+	{ "test_only", offsetof(srun_opt_t, test_only), _push_bool, _write_bool },
+	{ "profile", offsetof(srun_opt_t, profile), _push_uint32_t, _write_uint32_t },
+	{ "propagate", offsetof(srun_opt_t, propagate), _push_string, _write_string },
+	{ "task_epilog", offsetof(srun_opt_t, task_epilog), _push_string, _write_string },
+	{ "task_prolog", offsetof(srun_opt_t, task_prolog), _push_string, _write_string },
+	{ "licenses", offsetof(srun_opt_t, licenses), _push_string, _write_string },
+	{ "preserve_env", offsetof(srun_opt_t, preserve_env), _push_bool, _write_bool },
+	{ "export_env", offsetof(srun_opt_t, export_env), _push_string, _write_string },
+
+	/* constraint options */
+	{ "mincpus", offsetof(srun_opt_t, pn_min_cpus), _push_int32_t, _write_int32_t },
+	{ "mem", offsetof(srun_opt_t, pn_min_memory), _push_int64_t, _write_int64_t },
+	{ "mem_per_cpu", offsetof(srun_opt_t, mem_per_cpu), _push_int64_t, _write_int64_t },
+	{ "tmpdisk", offsetof(srun_opt_t, pn_min_tmp_disk), _push_long, _write_long },
+	{ "constraints", offsetof(srun_opt_t, constraints), _push_string, _write_string },
+	{ "cluster_constraints", offsetof(srun_opt_t, c_constraints), _push_string, _write_string },
+	{ "gres", offsetof(srun_opt_t, gres), _push_string, _write_string },
+	{ "contiguous", offsetof(srun_opt_t, contiguous), _push_bool, _write_bool },
+	{ "nodelist", offsetof(srun_opt_t, nodelist), _push_string, _write_string },
+	{ "alloc_nodelist", offsetof(srun_opt_t, alloc_nodelist), _push_string, NULL},
+	{ "exc_nodes", offsetof(srun_opt_t, exc_nodes), _push_string, _write_string },
+	{ "relative", offsetof(srun_opt_t, relative), _push_int, _write_int },
+	{ "relative_set", offsetof(srun_opt_t, relative_set), _push_bool, _write_bool },
+	{ "max_launch_time", offsetof(srun_opt_t, max_launch_time), _push_int, _write_int },
+	{ "max_exit_timeout", offsetof(srun_opt_t, max_exit_timeout), _push_int, _write_int },
+	{ "msg_timeout", offsetof(srun_opt_t, msg_timeout), _push_int, _write_int },
+	{ "launch_cmd", offsetof(srun_opt_t, launch_cmd), _push_bool, _write_bool },
+	{ "launcher_opts", offsetof(srun_opt_t, launcher_opts), _push_string, _write_string },
+	{ "network", offsetof(srun_opt_t, network), _push_string, _write_string },
+	{ "network_set_env", offsetof(srun_opt_t, network_set_env), _push_bool, _write_bool },
+	/* only bluegene reboot option for now */
+	{ "reboot", offsetof(srun_opt_t, reboot), _push_bool, _write_bool },
+	/* remaining options */
+	{ "prolog", offsetof(srun_opt_t, prolog), _push_string, _write_string },
+	{ "epilog", offsetof(srun_opt_t, epilog), _push_string, _write_string },
+	{ "begin", offsetof(srun_opt_t, begin), _push_time_t, _write_time_t },
+	{ "mail_type", offsetof(srun_opt_t, mail_type), _push_uint16_t, _write_uint16_t },
+	{ "mail_user", offsetof(srun_opt_t, mail_user), _push_string, _write_string },
+	{ "open_mode", offsetof(srun_opt_t, open_mode), _push_uint8_t, _write_uint8_t },
+	{ "acctg_freq", offsetof(srun_opt_t, acctg_freq), _push_string, _write_string },
+	{ "pty", offsetof(srun_opt_t, pty), _push_bool, _write_bool },
+	{ "restart_dir", offsetof(srun_opt_t, restart_dir), _push_string, _write_string },
+	{ "argc", offsetof(srun_opt_t, argc), _push_int, _write_int },
+	{ "argv", offsetof(srun_opt_t, argv), _push_stringarray, NULL },
+	{ "wckey", offsetof(sbatch_opt_t, wckey), _push_string, _write_string },
+	{ "reservation", offsetof(srun_opt_t, reservation), _push_string, _write_string },
+	{ "req_switch", offsetof(srun_opt_t, req_switch), _push_int, _write_int },
+	{ "wait4switch", offsetof(srun_opt_t, wait4switch), _push_int, _write_int },
+	/* skip spank env for the moment -- TODO SOON! */
+	{ "user_managed_io", offsetof(srun_opt_t, user_managed_io), _push_bool, _write_bool },
+	{ "core_spec", offsetof(srun_opt_t, core_spec), _push_int, _write_int },
+	{ "core_spec_set", offsetof(srun_opt_t, core_spec_set), _push_bool, _write_bool },
+	{ "burst_buffer", offsetof(srun_opt_t, burst_buffer), _push_string, _write_string },
+	{ "cpu_freq_min", offsetof(srun_opt_t, cpu_freq_min), _push_uint32_t, _write_uint32_t },
+	{ "cpu_freq_max", offsetof(srun_opt_t, cpu_freq_max), _push_uint32_t, _write_uint32_t },
+	{ "cpu_freq_gov", offsetof(srun_opt_t, cpu_freq_gov), _push_uint32_t, _write_uint32_t },
+	{ "power_flags", offsetof(srun_opt_t, power_flags), _push_uint8_t, _write_uint8_t },
+	{ "mcs_label", offsetof(srun_opt_t, mcs_label), _push_string, _write_string },
+	{ "deadline", offsetof(srun_opt_t, deadline), _push_time_t, _write_time_t },
+	{ "job_flags", offsetof(srun_opt_t, job_flags), _push_uint32_t, _write_uint32_t },
+	{ "delay_boot", offsetof(srun_opt_t, delay_boot), _push_uint32_t, _write_uint32_t },
+	{ "mpi_combine", offsetof(srun_opt_t, mpi_combine), _push_bool, _write_bool },
+	{ "pack_group", offsetof(srun_opt_t, pack_group), _push_string, _write_string },
+	{ "pack_step_cnt", offsetof(srun_opt_t, pack_step_cnt), _push_int, _write_int },
 	{ NULL, 0, NULL, NULL }
 };
 
@@ -249,7 +581,6 @@ static bool _push_string(void *data, const char *name,
 		return false;
 
 	char **tgt = (char **) (data + opt_str->offset);
-	fprintf(stderr, "read: data:%x, offset: %x, %s has %s\n", data, opt_str->offset, name, *tgt);
 	lua_pushstring(L, *tgt);
 	return true;
 }
@@ -262,8 +593,6 @@ static bool _write_string(void *data, int idx, const char *name,
 
 	char **tgt = (char **) (data + opt_str->offset);
 	char *str = luaL_checkstring(L, idx);
-
-	fprintf(stderr, "data:%x, offset: %x, %s to be replaced: %s, with: %s\n", data, opt_str->offset, name, *tgt, str);
 	xfree(*tgt);
 	if (str)
 		*tgt = xstrdup(str);
@@ -286,6 +615,28 @@ static bool _write_bool(void *data, int idx, const char *name,
 	return false;
 }
 
+static bool _push_long(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	long *tgt = (long *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_long(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	long *tgt = (long *) (data + opt_str->offset);
+	long towrite = (long) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
 static bool _push_int(void *data, const char *name,
 			 const struct option_string *opt_str, lua_State *L)
 {
@@ -299,7 +650,57 @@ static bool _push_int(void *data, const char *name,
 static bool _write_int(void *data, int idx, const char *name,
 			const struct option_string *opt_str, lua_State *L)
 {
-	return false;
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	int *tgt = (int *) (data + opt_str->offset);
+	int towrite = (int) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
+static bool _push_uint(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	unsigned int *tgt = (unsigned int *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_uint(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	unsigned int *tgt = (unsigned int *) (data + opt_str->offset);
+	unsigned int towrite = (unsigned int) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
+static bool _push_int64_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	int64_t *tgt = (int64_t *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_int64_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	int64_t *tgt = (int64_t *) (data + opt_str->offset);
+	int64_t towrite = (int64_t) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
 }
 
 static bool _push_int32_t(void *data, const char *name,
@@ -307,7 +708,7 @@ static bool _push_int32_t(void *data, const char *name,
 {
 	if (!data || !name || !opt_str || !L)
 		return false;
-	int32_t *tgt = (int *) (data + opt_str->offset);
+	int32_t *tgt = (int32_t *) (data + opt_str->offset);
 	lua_pushnumber(L, (double) *tgt);
 	return true;
 }
@@ -316,6 +717,116 @@ static bool _write_int32_t(void *data, int idx, const char *name,
 			const struct option_string *opt_str, lua_State *L)
 {
 	return false;
+}
+
+static bool _push_uint64_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	uint64_t *tgt = (uint64_t *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_uint64_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	uint64_t *tgt = (uint64_t *) (data + opt_str->offset);
+	uint64_t towrite = (uint64_t) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
+static bool _push_uint32_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	uint32_t *tgt = (uint32_t *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_uint32_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	uint32_t *tgt = (uint32_t *) (data + opt_str->offset);
+	uint32_t towrite = (uint32_t) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
+static bool _push_uint16_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	uint16_t *tgt = (uint16_t *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_uint16_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	uint16_t *tgt = (uint16_t *) (data + opt_str->offset);
+	uint16_t towrite = (uint16_t) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
+static bool _push_uint8_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	uint8_t *tgt = (uint8_t *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_uint8_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	uint8_t *tgt = (uint8_t *) (data + opt_str->offset);
+	uint8_t towrite = (uint8_t) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
+}
+
+static bool _push_time_t(void *data, const char *name,
+			 const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+	time_t *tgt = (time_t *) (data + opt_str->offset);
+	lua_pushnumber(L, (double) *tgt);
+	return true;
+}
+
+static bool _write_time_t(void *data, int idx, const char *name,
+			const struct option_string *opt_str, lua_State *L)
+{
+	if (!data || !name || !opt_str || !L)
+		return false;
+
+	time_t *tgt = (time_t *) (data + opt_str->offset);
+	time_t towrite = (time_t) luaL_checknumber(L, idx);
+	*tgt = towrite;
+	return true;
 }
 
 static bool _push_uid(void *data, const char *name,
@@ -413,7 +924,6 @@ static int _get_option_field_index(lua_State *L)
 	opt_str = lua_touserdata(L, -1);
 	lua_getfield(L, -2, "_opt_data");
 	data = lua_touserdata(L, -1);
-fprintf(stderr, "_get_option_field_index: _opt_str: %x, _opt_data: %x\n", opt_str, data);
 
 	req_option = find_opt_str(name, opt_str);
 	if ((req_option->read)(data, name, req_option, L))
@@ -435,7 +945,6 @@ static int _set_option_field(lua_State *L)
 	opt_str = lua_touserdata(L, -1);
 	lua_getfield(L, -2, "_opt_data");
 	data = lua_touserdata(L, -1);
-fprintf(stderr, "_set_option_field: _opt_str: %x, _opt_data: %x\n", opt_str, data);
 
 	req_option = find_opt_str(name, opt_str);
 	if (!(req_option->write))
@@ -558,6 +1067,7 @@ static int _check_lua_script_functions(void)
 	int rc = 0;
 	int i;
 	const char *fns[] = {
+		"slurm_cli_setup_defaults",
 		"slurm_cli_pre_submit",
 		NULL
 	};
@@ -691,6 +1201,12 @@ static void _register_lua_slurm_output_functions (void)
 	lua_setfield (L, -2, "SPREAD_JOB");
 	lua_pushnumber (L, USE_MIN_NODES);
 	lua_setfield (L, -2, "USE_MIN_NODES");
+	lua_pushnumber(L, CLI_SALLOC);
+	lua_setfield(L, -2, "CLI_SALLOC");
+	lua_pushnumber(L, CLI_SBATCH);
+	lua_setfield(L, -2, "CLI_SBATCH");
+	lua_pushnumber(L, CLI_SRUN);
+	lua_setfield(L, -2, "CLI_SRUN");
 
 	lua_setglobal (L, "slurm");
 }
@@ -809,6 +1325,39 @@ static void _stack_dump (char *header, lua_State *L)
 #endif
 }
 
+extern int setup_defaults(int cli_type, void *opt, char **err_msg) {
+	int rc = SLURM_ERROR;
+	(void) _load_script();
+
+	lua_getglobal(L, "slurm_cli_setup_defaults");
+	if (lua_isnil(L, -1))
+		goto out;
+	lua_pushnumber(L, (double) cli_type);
+	_push_options(cli_type, opt);
+	if (lua_pcall(L, 2, 1, 0) != 0) {
+		error("%s/lua: %s: %s", __func__, lua_script_path,
+			lua_tostring(L, -1));
+	} else {
+		if (lua_isnumber(L, -1)) {
+			rc = lua_tonumber(L, -1);
+		} else {
+			info("%s/lua: %s: non-numeric return code", __func__,
+				lua_script_path);
+			rc = SLURM_SUCCESS;
+		}
+		lua_pop(L, 1);
+	}
+	if (user_msg) {
+		if (err_msg) {
+			*err_msg = user_msg;
+			user_msg = NULL;
+		} else
+			xfree(user_msg);
+	}
+
+out:	lua_close (L);
+	return rc;
+}
 
 extern int pre_submit(int cli_type, void *opt, char **err_msg) {
 	int rc = SLURM_ERROR;
@@ -823,10 +1372,11 @@ extern int pre_submit(int cli_type, void *opt, char **err_msg) {
 	if (lua_isnil(L, -1))
 		goto out;
 
+	lua_pushnumber(L, (double) cli_type);
 	_push_options(cli_type, opt);
 
 	_stack_dump("cli_filter, before lua_pcall", L);
-	if (lua_pcall (L, 1, 1, 0) != 0) {
+	if (lua_pcall (L, 2, 1, 0) != 0) {
 		error("%s/lua: %s: %s",
 		      __func__, lua_script_path, lua_tostring (L, -1));
 	} else {
@@ -855,868 +1405,3 @@ out:	lua_close (L);
 extern int post_submit(int cli_type, uint32_t jobid, void *opt, char **err_msg) {
 	return SLURM_SUCCESS;
 }
-
-#if 0
-#include <inttypes.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "src/common/assoc_mgr.h"
-#include "src/slurmctld/locks.h"
-#include "src/slurmctld/slurmctld.h"
-#include "src/slurmctld/reservation.h"
-
-
-
-
-/* Get the default account for a user (or NULL if not present) */
-static char *_get_default_account(uint32_t user_id)
-{
-	slurmdb_user_rec_t user;
-
-	memset(&user, 0, sizeof(slurmdb_user_rec_t));
-	user.uid = user_id;
-	if (assoc_mgr_fill_in_user(acct_db_conn, &user, accounting_enforce,
-				   NULL) != SLURM_ERROR) {
-		return user.default_acct;
-	} else {
-		return NULL;
-	}
-}
-
-/* Get the default QOS for an association (or NULL if not present) */
-static char *_get_default_qos(uint32_t user_id, char *account, char *partition)
-{
-	slurmdb_assoc_rec_t assoc;
-	slurmdb_qos_rec_t qos;
-	uint32_t qos_id = 0;
-
-	memset(&assoc, 0, sizeof(slurmdb_assoc_rec_t));
-	assoc.uid = user_id;
-	assoc.partition = partition;
-	if (account) {
-		assoc.acct = account;
-	} else {
-		assoc.acct = _get_default_account(user_id);
-	}
-
-	if (assoc_mgr_fill_in_assoc(acct_db_conn, &assoc, accounting_enforce,
-				    NULL, false) != SLURM_ERROR)
-		qos_id = assoc.def_qos_id;
-
-	if (!qos_id)
-		return NULL;
-
-	memset(&qos, 0, sizeof(slurmdb_qos_rec_t));
-	qos.id = qos_id;
-	if (assoc_mgr_fill_in_qos(acct_db_conn, &qos, accounting_enforce,
-				  NULL, false) != SLURM_ERROR) {
-		return qos.name;
-	} else {
-		return NULL;
-	}
-}
-
-/* Get fields in an existing slurmctld job record.
- *
- * This is an incomplete list of job record fields. Add more as needed and
- * send patches to slurm-dev@schedmd.com.
- */
-static int _job_rec_field(const struct job_record *job_ptr,
-                          const char *name)
-{
-	int i;
-
-	if (job_ptr == NULL) {
-		error("_job_rec_field: job_ptr is NULL");
-		lua_pushnil (L);
-	} else if (!xstrcmp(name, "account")) {
-		lua_pushstring (L, job_ptr->account);
-	} else if (!xstrcmp(name, "admin_comment")) {
-		lua_pushstring (L, job_ptr->admin_comment);
-	} else if (!xstrcmp(name, "burst_buffer")) {
-		lua_pushstring (L, job_ptr->burst_buffer);
-	} else if (!xstrcmp(name, "comment")) {
-		lua_pushstring (L, job_ptr->comment);
-	} else if (!xstrcmp(name, "delay_boot")) {
-		lua_pushnumber (L, job_ptr->delay_boot);
-	} else if (!xstrcmp(name, "direct_set_prio")) {
-		lua_pushnumber (L, job_ptr->direct_set_prio);
-	} else if (!xstrcmp(name, "features")) {
-		if (job_ptr->details)
-			lua_pushstring (L, job_ptr->details->features);
-		else
-			lua_pushnil (L);
-	} else if (!xstrcmp(name, "gres")) {
-		lua_pushstring (L, job_ptr->gres);
-	} else if (!xstrcmp(name, "job_id")) {
-		lua_pushnumber (L, job_ptr->job_id);
-	} else if (!xstrcmp(name, "job_state")) {
-		lua_pushnumber (L, job_ptr->job_state);
-	} else if (!xstrcmp(name, "licenses")) {
-		lua_pushstring (L, job_ptr->licenses);
-	} else if (!xstrcmp(name, "max_cpus")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->max_cpus);
-		else
-			lua_pushnumber (L, 0);
-	} else if (!xstrcmp(name, "max_nodes")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->max_nodes);
-		else
-			lua_pushnumber (L, 0);
-	} else if (!xstrcmp(name, "min_cpus")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->min_cpus);
-		else
-			lua_pushnumber (L, 0);
-	} else if (!xstrcmp(name, "min_nodes")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->min_nodes);
-		else
-			lua_pushnumber (L, 0);
-	} else if (!xstrcmp(name, "nice")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->nice);
-		else
-			lua_pushnumber (L, (uint16_t)NO_VAL);
-	} else if (!xstrcmp(name, "partition")) {
-		lua_pushstring (L, job_ptr->partition);
-	} else if (!xstrcmp(name, "pn_min_cpus")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->pn_min_cpus);
-		else
-			lua_pushnumber (L, NO_VAL);
-	} else if (!xstrcmp(name, "pn_min_memory")) {
-		if (job_ptr->details)
-			lua_pushnumber (L, job_ptr->details->pn_min_memory);
-		else
-			lua_pushnumber (L, NO_VAL64);
-	} else if (!xstrcmp(name, "priority")) {
-		lua_pushnumber (L, job_ptr->priority);
-	} else if (!xstrcmp(name, "qos")) {
-		if (job_ptr->qos_ptr) {
-			slurmdb_qos_rec_t *qos_ptr =
-				(slurmdb_qos_rec_t *)job_ptr->qos_ptr;
-			lua_pushstring (L, qos_ptr->name);
-		} else {
-			lua_pushnil (L);
-		}
-	} else if (!xstrcmp(name, "reboot")) {
-		lua_pushnumber (L, job_ptr->reboot);
-	} else if (!xstrcmp(name, "req_switch")) {
-		lua_pushnumber (L, job_ptr->req_switch);
-	} else if (!xstrcmp(name, "spank_job_env")) {
-		if ((job_ptr->spank_job_env_size == 0) ||
-		    (job_ptr->spank_job_env == NULL)) {
-			lua_pushnil (L);
-		} else {
-			lua_newtable(L);
-			for (i = 0; i < job_ptr->spank_job_env_size; i++) {
-				if (job_ptr->spank_job_env[i] != NULL) {
-					lua_pushnumber (L, i);
-					lua_pushstring (L,
-						job_ptr->spank_job_env[i]);
-					lua_settable (L, -3);
-				}
-			}
-		}
-	} else if (!xstrcmp(name, "spank_job_env_size")) {
-		lua_pushnumber (L, job_ptr->spank_job_env_size);
-	} else if (!xstrcmp(name, "time_limit")) {
-		lua_pushnumber (L, job_ptr->time_limit);
-	} else if (!xstrcmp(name, "time_min")) {
-		lua_pushnumber (L, job_ptr->time_min);
-	} else if (!xstrcmp(name, "wait4switch")) {
-		lua_pushnumber (L, job_ptr->wait4switch);
-	} else if (!xstrcmp(name, "wckey")) {
-		lua_pushstring (L, job_ptr->wckey);
-	} else {
-		lua_pushnil (L);
-	}
-
-	return 1;
-}
-
-/* Get fields in an existing slurmctld job_record */
-static int _job_rec_field_index(lua_State *L)
-{
-	const char *name = luaL_checkstring(L, 2);
-	struct job_record *job_ptr;
-
-	lua_getmetatable(L, -2);
-	lua_getfield(L, -1, "_job_rec_ptr");
-	job_ptr = lua_touserdata(L, -1);
-
-	return _job_rec_field(job_ptr, name);
-}
-
-/* Set fields in the job request structure on job submit or modify */
-static int _set_job_env_field(lua_State *L)
-{
-	const char *name, *value_str;
-	struct job_descriptor *job_desc;
-	char *name_eq = NULL;
-	int i, j, name_len;
-
-	name = luaL_checkstring(L, 2);
-	name_eq = xstrdup(name);
-	xstrcat(name_eq, "=");
-	name_len = strlen(name_eq);
-	lua_getmetatable(L, -3);
-	lua_getfield(L, -1, "_job_desc");
-	job_desc = lua_touserdata(L, -1);
-	if (job_desc == NULL) {
-		error("%s: job_desc is NULL", __func__);
-	} else {
-		value_str = luaL_checkstring(L, 3);
-		for (i = 0; job_desc->environment[i]; i++) {
-			if (!xstrncmp(job_desc->environment[i], name_eq,
-				      name_len)) {
-				job_desc->environment[i][name_len] = '\0';
-				xstrcat(job_desc->environment[i], value_str);
-				break;
-			}
-		}
-		if (!job_desc->environment[i]) {
-			job_desc->environment = xrealloc(job_desc->environment,
-							 sizeof(char*) * (i+2));
-			for (j = i; j >= 1; j--) {
-				job_desc->environment[j] =
-					job_desc->environment[j-1];
-			}
-			job_desc->environment[0] = xstrdup(name_eq);
-			xstrcat(job_desc->environment[0], value_str);
-		}
-	}
-	xfree(name_eq);
-
-	return 0;
-}
-
-static int _job_env_field(const struct job_descriptor *job_desc,
-			  const char *name)
-{
-	char *name_eq = "";
-	int i, name_len;
-
-	name_eq = xstrdup(name);
-	xstrcat(name_eq, "=");
-	name_len = strlen(name_eq);
-	if (job_desc == NULL) {
-		error("%s: job_desc is NULL", __func__);
-		lua_pushnil (L);
-	} else if (job_desc->environment == NULL) {
-		error("%s: job_desc->environment is NULL", __func__);
-		lua_pushnil (L);
-	} else {
-		for (i = 0; job_desc->environment[i]; i++) {
-			if (!xstrncmp(job_desc->environment[i], name_eq,
-				      name_len)) {
-				lua_pushstring (L, job_desc->environment[i] +
-						   name_len);
-				break;
-			}
-		}
-		if (!job_desc->environment[i])
-			lua_pushnil (L);
-	}
-	xfree(name_eq);
-
-	return 1;
-}
-
-/* Get fields in the job request record on job submit or modify */
-static int _get_job_env_field_name(lua_State *L)
-{
-	const struct job_descriptor *job_desc = lua_touserdata(L, 1);
-	const char *name = luaL_checkstring(L, 2);
-	return _job_env_field(job_desc, name);
-}
-
-/* Get fields in an existing slurmctld job_descriptor record */
-static int _job_env_field_index(lua_State *L)
-{
-	const char *name;
-	struct job_descriptor *job_desc;
-
-	name = luaL_checkstring(L, 2);
-	lua_getmetatable(L, -2);
-	lua_getfield(L, -1, "_job_desc");
-	job_desc = lua_touserdata(L, -1);
-	return _job_env_field(job_desc, name);
-}
-
-static void _push_job_env(struct job_descriptor *job_desc)
-{
-	lua_newtable(L);
-
-	lua_newtable(L);
-	lua_pushcfunction(L, _job_env_field_index);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, _set_job_env_field);
-	lua_setfield(L, -2, "__newindex");
-	/* Store the job descriptor in the metatable, so the index
-	 * function knows which struct it's getting data for.
-	 */
-	lua_pushlightuserdata(L, job_desc);
-	lua_setfield(L, -2, "_job_desc");
-	lua_setmetatable(L, -2);
-}
-#endif
-
-#if 0
-static int _get_job_req_field(const struct job_descriptor *job_desc,
-			      const char *name)
-{
-	int i;
-
-	if (job_desc == NULL) {
-		error("%s: job_desc is NULL", __func__);
-		lua_pushnil (L);
-	} else if (!xstrcmp(name, "account")) {
-		lua_pushstring (L, job_desc->account);
-	} else if (!xstrcmp(name, "acctg_freq")) {
-		lua_pushstring (L, job_desc->acctg_freq);
-	} else if (!xstrcmp(name, "admin_comment")) {
-		lua_pushstring (L, job_desc->admin_comment);
-	} else if (!xstrcmp(name, "alloc_node")) {
-		lua_pushstring (L, job_desc->alloc_node);
-	} else if (!xstrcmp(name, "array_inx")) {
-		lua_pushstring (L, job_desc->array_inx);
-	} else if (!xstrcmp(name, "begin_time")) {
-		lua_pushnumber (L, job_desc->begin_time);
-	} else if (!xstrcmp(name, "bitflags")) {
-		lua_pushnumber (L, job_desc->bitflags);
-	} else if (!xstrcmp(name, "boards_per_node")) {
-		lua_pushnumber (L, job_desc->boards_per_node);
-	} else if (!xstrcmp(name, "burst_buffer")) {
-		lua_pushstring (L, job_desc->burst_buffer);
-	} else if (!xstrcmp(name, "clusters")) {
-		lua_pushstring (L, job_desc->clusters);
-	} else if (!xstrcmp(name, "comment")) {
-		lua_pushstring (L, job_desc->comment);
-	} else if (!xstrcmp(name, "contiguous")) {
-		lua_pushnumber (L, job_desc->contiguous);
-	} else if (!xstrcmp(name, "cores_per_socket")) {
-		lua_pushnumber (L, job_desc->cores_per_socket);
-	} else if (!xstrcmp(name, "cpu_freq_min")) {
-		lua_pushnumber (L, job_desc->cpu_freq_min);
-	} else if (!xstrcmp(name, "cpu_freq_max")) {
-		lua_pushnumber (L, job_desc->cpu_freq_max);
-	} else if (!xstrcmp(name, "cpu_freq_gov")) {
-		lua_pushnumber (L, job_desc->cpu_freq_gov);
-	} else if (!xstrcmp(name, "cpus_per_task")) {
-		lua_pushnumber (L, job_desc->cpus_per_task);
-	} else if (!xstrcmp(name, "default_account")) {
-		lua_pushstring (L, _get_default_account(job_desc->user_id));
-	} else if (!xstrcmp(name, "default_qos")) {
-		lua_pushstring (L, _get_default_qos(job_desc->user_id,
-						    job_desc->account,
-						    job_desc->partition));
-	} else if (!xstrcmp(name, "delay_boot")) {
-		lua_pushnumber (L, job_desc->delay_boot);
-	} else if (!xstrcmp(name, "dependency")) {
-		lua_pushstring (L, job_desc->dependency);
-	} else if (!xstrcmp(name, "end_time")) {
-		lua_pushnumber (L, job_desc->end_time);
-	} else if (!xstrcmp(name, "environment")) {
-		_push_job_env ((struct job_descriptor *)job_desc); // No const
-	} else if (!xstrcmp(name, "exc_nodes")) {
-		lua_pushstring (L, job_desc->exc_nodes);
-	} else if (!xstrcmp(name, "features")) {
-		lua_pushstring (L, job_desc->features);
-	} else if (!xstrcmp(name, "gres")) {
-		lua_pushstring (L, job_desc->gres);
-	} else if (!xstrcmp(name, "group_id")) {
-		lua_pushnumber (L, job_desc->group_id);
-	} else if (!xstrcmp(name, "immediate")) {
-		lua_pushnumber (L, job_desc->immediate);
-	} else if (!xstrcmp(name, "licenses")) {
-		lua_pushstring (L, job_desc->licenses);
-	} else if (!xstrcmp(name, "mail_type")) {
-		lua_pushnumber (L, job_desc->mail_type);
-	} else if (!xstrcmp(name, "mail_user")) {
-		lua_pushstring (L, job_desc->mail_user);
-	} else if (!xstrcmp(name, "max_cpus")) {
-		lua_pushnumber (L, job_desc->max_cpus);
-	} else if (!xstrcmp(name, "max_nodes")) {
-		lua_pushnumber (L, job_desc->max_nodes);
-	} else if (!xstrcmp(name, "min_cpus")) {
-		lua_pushnumber (L, job_desc->min_cpus);
-	} else if (!xstrcmp(name, "min_nodes")) {
-		lua_pushnumber (L, job_desc->min_nodes);
-	} else if (!xstrcmp(name, "name")) {
-		lua_pushstring (L, job_desc->name);
-	} else if (!xstrcmp(name, "nice")) {
-		lua_pushnumber (L, job_desc->nice);
-	} else if (!xstrcmp(name, "ntasks_per_board")) {
-		lua_pushnumber (L, job_desc->ntasks_per_board);
-	} else if (!xstrcmp(name, "ntasks_per_core")) {
-		lua_pushnumber (L, job_desc->ntasks_per_core);
-	} else if (!xstrcmp(name, "ntasks_per_node")) {
-		lua_pushnumber (L, job_desc->ntasks_per_node);
-	} else if (!xstrcmp(name, "ntasks_per_socket")) {
-		lua_pushnumber (L, job_desc->ntasks_per_socket);
-	} else if (!xstrcmp(name, "num_tasks")) {
-		lua_pushnumber (L, job_desc->num_tasks);
-	} else if (!xstrcmp(name, "partition")) {
-		lua_pushstring (L, job_desc->partition);
-	} else if (!xstrcmp(name, "power_flags")) {
-		lua_pushnumber (L, job_desc->power_flags);
-	} else if (!xstrcmp(name, "pn_min_cpus")) {
-		lua_pushnumber (L, job_desc->pn_min_cpus);
-	} else if (!xstrcmp(name, "pn_min_memory")) {
-		lua_pushnumber (L, job_desc->pn_min_memory);
-	} else if (!xstrcmp(name, "pn_min_tmp_disk")) {
-		lua_pushnumber (L, job_desc->pn_min_tmp_disk);
-	} else if (!xstrcmp(name, "priority")) {
-		lua_pushnumber (L, job_desc->priority);
-	} else if (!xstrcmp(name, "qos")) {
-		lua_pushstring (L, job_desc->qos);
-	} else if (!xstrcmp(name, "reboot")) {
-		lua_pushnumber (L, job_desc->reboot);
-	} else if (!xstrcmp(name, "req_nodes")) {
-		lua_pushstring (L, job_desc->req_nodes);
-	} else if (!xstrcmp(name, "req_switch")) {
-		lua_pushnumber (L, job_desc->req_switch);
-	} else if (!xstrcmp(name, "requeue")) {
-		lua_pushnumber (L, job_desc->requeue);
-	} else if (!xstrcmp(name, "reservation")) {
-		lua_pushstring (L, job_desc->reservation);
-	} else if (!xstrcmp(name, "script")) {
-		lua_pushstring (L, job_desc->script);
-	} else if (!xstrcmp(name, "shared")) {
-		lua_pushnumber (L, job_desc->shared);
-	} else if (!xstrcmp(name, "sockets_per_board")) {
-		lua_pushnumber (L, job_desc->sockets_per_board);
-	} else if (!xstrcmp(name, "sockets_per_node")) {
-		lua_pushnumber (L, job_desc->sockets_per_node);
-	} else if (!xstrcmp(name, "spank_job_env")) {
-		if ((job_desc->spank_job_env_size == 0) ||
-		    (job_desc->spank_job_env == NULL)) {
-			lua_pushnil (L);
-		} else {
-			lua_newtable(L);
-			for (i = 0; i < job_desc->spank_job_env_size; i++) {
-				if (job_desc->spank_job_env[i] != NULL) {
-					lua_pushnumber (L, i);
-					lua_pushstring (L,
-						job_desc->spank_job_env[i]);
-					lua_settable (L, -3);
-				}
-			}
-		}
-	} else if (!xstrcmp(name, "spank_job_env_size")) {
-		lua_pushnumber (L, job_desc->spank_job_env_size);
-	} else if (!xstrcmp(name, "std_err")) {
-		lua_pushstring (L, job_desc->std_err);
-	} else if (!xstrcmp(name, "std_in")) {
-		lua_pushstring (L, job_desc->std_in);
-	} else if (!xstrcmp(name, "std_out")) {
-		lua_pushstring (L, job_desc->std_out);
-	} else if (!xstrcmp(name, "threads_per_core")) {
-		lua_pushnumber (L, job_desc->threads_per_core);
-	} else if (!xstrcmp(name, "time_limit")) {
-		lua_pushnumber (L, job_desc->time_limit);
-	} else if (!xstrcmp(name, "time_min")) {
-		lua_pushnumber (L, job_desc->time_min);
-	} else if (!xstrcmp(name, "user_id")) {
-		lua_pushnumber (L, job_desc->user_id);
-	} else if (!xstrcmp(name, "wait4switch")) {
-		lua_pushnumber (L, job_desc->wait4switch);
-	} else if (!xstrcmp(name, "work_dir")) {
-		lua_pushstring (L, job_desc->work_dir);
-	} else if (!xstrcmp(name, "wckey")) {
-		lua_pushstring (L, job_desc->wckey);
-	} else {
-		lua_pushnil (L);
-	}
-
-	return 1;
-}
-
-/* Get fields in the job request record on job submit or modify */
-static int _get_job_req_field_name(lua_State *L)
-{
-	const struct job_descriptor *job_desc = lua_touserdata(L, 1);
-	const char *name = luaL_checkstring(L, 2);
-
-	return _get_job_req_field(job_desc, name);
-}
-
-/* Get fields in an existing slurmctld job_descriptor record */
-static int _get_job_req_field_index(lua_State *L)
-{
-	const char *name;
-	struct job_descriptor *job_desc;
-
-	name = luaL_checkstring(L, 2);
-	lua_getmetatable(L, -2);
-	lua_getfield(L, -1, "_job_desc");
-	job_desc = lua_touserdata(L, -1);
-
-	return _get_job_req_field(job_desc, name);
-}
-
-/* Set fields in the job request structure on job submit or modify */
-static int _set_job_req_field(lua_State *L)
-{
-	const char *name, *value_str;
-	struct job_descriptor *job_desc;
-
-	name = luaL_checkstring(L, 2);
-	lua_getmetatable(L, -3);
-	lua_getfield(L, -1, "_job_desc");
-	job_desc = lua_touserdata(L, -1);
-	if (job_desc == NULL) {
-		error("%s: job_desc is NULL", __func__);
-	} else if (!xstrcmp(name, "account")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->account);
-		if (strlen(value_str))
-			job_desc->account = xstrdup(value_str);
-	} else if (!xstrcmp(name, "acctg_freq")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->acctg_freq);
-		if (strlen(value_str))
-			job_desc->acctg_freq = xstrdup(value_str);
-	} else if (!xstrcmp(name, "admin_comment")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->admin_comment);
-		if (strlen(value_str))
-			job_desc->admin_comment = xstrdup(value_str);
-	} else if (!xstrcmp(name, "array_inx")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->array_inx);
-		if (strlen(value_str))
-			job_desc->array_inx = xstrdup(value_str);
-	} else if (!xstrcmp(name, "begin_time")) {
-		job_desc->begin_time = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "bitflags")) {
-		job_desc->bitflags = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "burst_buffer")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->burst_buffer);
-		if (strlen(value_str))
-			job_desc->burst_buffer = xstrdup(value_str);
-	} else if (!xstrcmp(name, "clusters")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->clusters);
-		if (strlen(value_str))
-			job_desc->clusters = xstrdup(value_str);
-	} else if (!xstrcmp(name, "comment")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->comment);
-		if (strlen(value_str))
-			job_desc->comment = xstrdup(value_str);
-	} else if (!xstrcmp(name, "contiguous")) {
-		job_desc->contiguous = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "cores_per_socket")) {
-		job_desc->cores_per_socket = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "cpus_per_task")) {
-		job_desc->cpus_per_task = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "cpu_freq_min")) {
-		job_desc->cpu_freq_min = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "cpu_freq_max")) {
-		job_desc->cpu_freq_max = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "cpu_freq_gov")) {
-		job_desc->cpu_freq_gov = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "dependency")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->dependency);
-		if (strlen(value_str))
-			job_desc->dependency = xstrdup(value_str);
-	} else if (!xstrcmp(name, "delay_boot")) {
-		job_desc->delay_boot = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "end_time")) {
-		job_desc->end_time = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "exc_nodes")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->exc_nodes);
-		if (strlen(value_str))
-			job_desc->exc_nodes = xstrdup(value_str);
-	} else if (!xstrcmp(name, "features")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->features);
-		if (strlen(value_str))
-			job_desc->features = xstrdup(value_str);
-	} else if (!xstrcmp(name, "gres")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->gres);
-		if (strlen(value_str))
-			job_desc->gres = xstrdup(value_str);
-	} else if (!xstrcmp(name, "immediate")) {
-		job_desc->immediate = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "licenses")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->licenses);
-		if (strlen(value_str))
-			job_desc->licenses = xstrdup(value_str);
-	} else if (!xstrcmp(name, "max_cpus")) {
-		job_desc->max_cpus = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "max_nodes")) {
-		job_desc->max_nodes = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "min_cpus")) {
-		job_desc->min_cpus = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "min_nodes")) {
-		job_desc->min_nodes = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "name")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->name);
-		if (strlen(value_str))
-			job_desc->name = xstrdup(value_str);
-	} else if (!xstrcmp(name, "nice")) {
-		job_desc->nice = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "ntasks_per_node")) {
-		job_desc->ntasks_per_node = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "ntasks_per_socket")) {
-		job_desc->ntasks_per_socket = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "num_tasks")) {
-		job_desc->num_tasks = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "partition")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->partition);
-		if (strlen(value_str))
-			job_desc->partition = xstrdup(value_str);
-	} else if (!xstrcmp(name, "power_flags")) {
-		job_desc->power_flags = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "pn_min_cpus")) {
-		job_desc->pn_min_cpus = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "pn_min_memory")) {
-		job_desc->pn_min_memory = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "pn_min_tmp_disk")) {
-		job_desc->pn_min_tmp_disk = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "priority")) {
-		job_desc->priority = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "qos")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->qos);
-		if (strlen(value_str))
-			job_desc->qos = xstrdup(value_str);
-	} else if (!xstrcmp(name, "reboot")) {
-		job_desc->reboot = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "req_nodes")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->req_nodes);
-		if (strlen(value_str))
-			job_desc->req_nodes = xstrdup(value_str);
-	} else if (!xstrcmp(name, "req_switch")) {
-		job_desc->req_switch = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "requeue")) {
-		job_desc->requeue = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "reservation")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->reservation);
-		if (strlen(value_str))
-			job_desc->reservation = xstrdup(value_str);
-	} else if (!xstrcmp(name, "script")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->script);
-		if (strlen(value_str))
-			job_desc->script = xstrdup(value_str);
-	} else if (!xstrcmp(name, "shared")) {
-		job_desc->shared = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "sockets_per_node")) {
-		job_desc->sockets_per_node = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "std_err")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->std_err);
-		if (strlen(value_str))
-			job_desc->std_err = xstrdup(value_str);
-	} else if (!xstrcmp(name, "std_in")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->std_in);
-		if (strlen(value_str))
-			job_desc->std_in = xstrdup(value_str);
-	} else if (!xstrcmp(name, "std_out")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->std_out);
-		if (strlen(value_str))
-			job_desc->std_out = xstrdup(value_str);
-	} else if (!xstrcmp(name, "threads_per_core")) {
-		job_desc->threads_per_core = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "time_limit")) {
-		job_desc->time_limit = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "time_min")) {
-		job_desc->time_min = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "wait4switch")) {
-		job_desc->wait4switch = luaL_checknumber(L, 3);
-	} else if (!xstrcmp(name, "wckey")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->wckey);
-		if (strlen(value_str))
-			job_desc->wckey = xstrdup(value_str);
-	} else if (!xstrcmp(name, "work_dir")) {
-		value_str = luaL_checkstring(L, 3);
-		xfree(job_desc->work_dir);
-		if (strlen(value_str))
-			job_desc->work_dir = xstrdup(value_str);
-	} else {
-		error("_set_job_field: unrecognized field: %s", name);
-	}
-
-	return 0;
-}
-
-static void _push_job_desc(struct job_descriptor *job_desc)
-{
-	lua_newtable(L);
-
-	lua_newtable(L);
-	lua_pushcfunction(L, _get_job_req_field_index);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, _set_job_req_field);
-	lua_setfield(L, -2, "__newindex");
-	/* Store the job descriptor in the metatable, so the index
-	 * function knows which struct it's getting data for.
-	 */
-	lua_pushlightuserdata(L, job_desc);
-	lua_setfield(L, -2, "_job_desc");
-	lua_setmetatable(L, -2);
-}
-
-static void _push_job_rec(struct job_record *job_ptr)
-{
-	lua_newtable(L);
-
-	lua_newtable(L);
-	lua_pushcfunction(L, _job_rec_field_index);
-	lua_setfield(L, -2, "__index");
-	/* Store the job_ptr in the metatable, so the index
-	 * function knows which struct it's getting data for.
-	 */
-	lua_pushlightuserdata(L, job_ptr);
-	lua_setfield(L, -2, "_job_rec_ptr");
-	lua_setmetatable(L, -2);
-}
-
-/* Get fields in an existing slurmctld partition record
- *
- * This is an incomplete list of partition record fields. Add more as needed
- * and send patches to slurm-dev@schedmd.com
- */
-static int _part_rec_field(const struct part_record *part_ptr,
-                           const char *name)
-{
-	if (part_ptr == NULL) {
-		error("_get_part_field: part_ptr is NULL");
-		lua_pushnil (L);
-	} else if (!xstrcmp(name, "allow_qos")) {
-		lua_pushstring (L, part_ptr->allow_qos);
-	} else if (!xstrcmp(name, "default_time")) {
-		lua_pushnumber (L, part_ptr->default_time);
-	} else if (!xstrcmp(name, "flag_default")) {
-		int is_default = 0;
-		if (part_ptr->flags & PART_FLAG_DEFAULT)
-			is_default = 1;
-		lua_pushnumber (L, is_default);
-	} else if (!xstrcmp(name, "flags")) {
-		lua_pushnumber (L, part_ptr->flags);
-	} else if (!xstrcmp(name, "max_nodes")) {
-		lua_pushnumber (L, part_ptr->max_nodes);
-	} else if (!xstrcmp(name, "max_nodes_orig")) {
-		lua_pushnumber (L, part_ptr->max_nodes_orig);
-	} else if (!xstrcmp(name, "max_time")) {
-		lua_pushnumber (L, part_ptr->max_time);
-	} else if (!xstrcmp(name, "min_nodes")) {
-		lua_pushnumber (L, part_ptr->min_nodes);
-	} else if (!xstrcmp(name, "min_nodes_orig")) {
-		lua_pushnumber (L, part_ptr->min_nodes_orig);
-	} else if (!xstrcmp(name, "name")) {
-		lua_pushstring (L, part_ptr->name);
-	} else if (!xstrcmp(name, "nodes")) {
-		lua_pushstring (L, part_ptr->nodes);
-	} else if (!xstrcmp(name, "priority_job_factor")) {
-		lua_pushnumber (L, part_ptr->priority_job_factor);
-	} else if (!xstrcmp(name, "priority_tier")) {
-		lua_pushnumber (L, part_ptr->priority_tier);
-	} else if (!xstrcmp(name, "qos")) {
-		lua_pushstring (L, part_ptr->qos_char);
-	} else if (!xstrcmp(name, "state_up")) {
-		lua_pushnumber (L, part_ptr->state_up);
-	} else {
-		lua_pushnil (L);
-	}
-
-	return 1;
-}
-
-static int _get_part_rec_field (lua_State *L)
-{
-	const struct part_record *part_ptr = lua_touserdata(L, 1);
-	const char *name = luaL_checkstring(L, 2);
-
-	return _part_rec_field(part_ptr, name);
-}
-
-static int _part_rec_field_index(lua_State *L)
-{
-	const char *name = luaL_checkstring(L, 2);
-	struct part_record *part_ptr;
-
-	lua_getmetatable(L, -2);
-	lua_getfield(L, -1, "_part_rec_ptr");
-	part_ptr = lua_touserdata(L, -1);
-
-	return _part_rec_field(part_ptr, name);
-}
-
-static bool _user_can_use_part(uint32_t user_id, uint32_t submit_uid,
-			       struct part_record *part_ptr)
-{
-	int i;
-
-	if (user_id == 0) {
-		if (part_ptr->flags & PART_FLAG_NO_ROOT)
-			return false;
-		return true;
-	}
-
-	if ((part_ptr->flags & PART_FLAG_ROOT_ONLY) && (submit_uid != 0))
-		return false;
-
-	if (part_ptr->allow_uids == NULL)
-		return true;	/* No user ID filters */
-
-	for (i=0; part_ptr->allow_uids[i]; i++) {
-		if (user_id == part_ptr->allow_uids[i])
-			return true;
-	}
-	return false;
-}
-
-static void _push_partition_list(uint32_t user_id, uint32_t submit_uid)
-{
-	ListIterator part_iterator;
-	struct part_record *part_ptr;
-
-	lua_newtable(L);
-	part_iterator = list_iterator_create(part_list);
-	while ((part_ptr = (struct part_record *) list_next(part_iterator))) {
-		if (!_user_can_use_part(user_id, submit_uid, part_ptr))
-			continue;
-
-		/* Create an empty table, with a metatable that looks up the
-		 * data for the partition.
-		 */
-		lua_newtable(L);
-
-		lua_newtable(L);
-		lua_pushcfunction(L, _part_rec_field_index);
-		lua_setfield(L, -2, "__index");
-		/* Store the part_record in the metatable, so the index
-		 * function knows which job it's getting data for.
-		 */
-		lua_pushlightuserdata(L, part_ptr);
-		lua_setfield(L, -2, "_part_rec_ptr");
-		lua_setmetatable(L, -2);
-
-		lua_setfield(L, -2, part_ptr->name);
-	}
-	list_iterator_destroy(part_iterator);
-}
-
-#endif

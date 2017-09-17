@@ -861,6 +861,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/slurm/job_submit_require_timelimit.so
 %{_libdir}/slurm/job_submit_throttle.so
 %{_libdir}/slurm/cli_filter_defaults.so
+%{_libdir}/slurm/cli_filter_user_defaults.so
 %{_libdir}/slurm/jobacct_gather_cgroup.so
 %{_libdir}/slurm/jobacct_gather_linux.so
 %{_libdir}/slurm/jobacct_gather_none.so

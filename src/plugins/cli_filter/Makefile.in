@@ -488,7 +488,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = \
         defaults \
-	lua
+	lua \
+	user_defaults
 
 all: all-recursive
 

@@ -55,6 +55,9 @@
 #include "src/common/cli_filter.h"
 
 typedef struct cli_filter_ops {
+	int		(*setup_defaults)( int cli_type,
+					  void *opt,
+					  char **err_msg );
 	int		(*pre_submit)	( int cli_type,
 					  void *opt,
 					  char **err_msg );
@@ -68,6 +71,7 @@ typedef struct cli_filter_ops {
  * Must be synchronized with cli_filter_ops_t above.
  */
 static const char *syms[] = {
+	"setup_defaults",
 	"pre_submit",
 	"post_submit"
 };
@@ -225,6 +229,21 @@ extern int cli_filter_plugin_pre_submit(int type, void *data, char **err_msg) {
 	slurm_mutex_lock(&g_context_lock);
 	for (i = 0; ((i < g_context_cnt) && (rc == SLURM_SUCCESS)); i++)
 		rc = (*(ops[i].pre_submit))(type, data, err_msg);
+	slurm_mutex_unlock(&g_context_lock);
+	END_TIMER2("cli_filter_plugin_pre_submit");
+
+	return rc;
+}
+
+extern int cli_filter_plugin_setup_defaults(int type, void *data, char **err_msg) {
+	DEF_TIMERS;
+	int i, rc;
+
+	START_TIMER;
+	rc = cli_filter_plugin_init();
+	slurm_mutex_lock(&g_context_lock);
+	for (i = 0; ((i < g_context_cnt) && (rc == SLURM_SUCCESS)); i++)
+		rc = (*(ops[i].setup_defaults))(type, data, err_msg);
 	slurm_mutex_unlock(&g_context_lock);
 	END_TIMER2("cli_filter_plugin_pre_submit");
 

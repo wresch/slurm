@@ -74,6 +74,8 @@ extern int cli_filter_plugin_fini(void);
  */
 extern int cli_filter_plugin_reconfig(void);
 
+extern int cli_filter_plugin_setup_defaults(int cli_type, void *opt, char **err_msg);
+
 /*
  * Execute the pre_submit() function in each cli filter plugin.
  * If any plugin function returns anything other than SLURM_SUCCESS

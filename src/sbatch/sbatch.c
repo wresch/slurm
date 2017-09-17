@@ -106,6 +106,14 @@ int main(int argc, char **argv)
 	if (atexit((void (*) (void)) spank_fini) < 0)
 		error("Failed to register atexit handler for plugins: %m");
 
+	/* run cli_filter pre_submit */
+	rc = cli_filter_plugin_setup_defaults(CLI_SBATCH, (void *) &opt,
+		&cli_err_msg);
+	if (rc != SLURM_SUCCESS) {
+		/* TODO print out cli_err_msg */
+		exit(error_exit);
+	}
+
 	script_name = process_options_first_pass(argc, argv);
 
 	/* reinit log with new verbosity (if changed by command line) */
