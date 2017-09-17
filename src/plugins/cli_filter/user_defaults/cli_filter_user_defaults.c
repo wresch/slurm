@@ -85,7 +85,7 @@ const uint32_t plugin_version   = SLURM_VERSION_NUMBER;
 \*****************************************************************************/
 extern int setup_defaults(int cli_type, void *opt, char **err_mesg) {
 	struct passwd pwd, *result;
-	char buffer[PW_BUF_SIZE], *p = NULL;
+	char buffer[PW_BUF_SIZE];
 	char defaults_path[PATH_MAX];
 	FILE *fp = NULL;
 	int rc = 0;
@@ -95,7 +95,8 @@ extern int setup_defaults(int cli_type, void *opt, char **err_mesg) {
 		error("Failed to lookup user homedir to load slurm defaults.");
 		return SLURM_SUCCESS;
 	}
-	snprintf(defaults_path, "%s/.slurm_defaults", result->pw_dir);
+	snprintf(defaults_path, sizeof(defaults_path), "%s/.slurm_defaults",
+		 result->pw_dir);
 	fp = fopen(defaults_path, "r");
 
 	if (!fp) {
