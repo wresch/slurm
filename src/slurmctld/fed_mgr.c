@@ -4293,6 +4293,7 @@ extern int fed_mgr_job_requeue(struct job_record *job_ptr)
 	/* don't submit siblings for jobs that are held */
 	if (job_ptr->priority == 0) {
 		job_ptr->job_state &= (~JOB_REQUEUE_FED);
+		job_ptr->job_state &= ~JOB_REVOKED;
 
 		update_job_fed_details(job_ptr);
 
