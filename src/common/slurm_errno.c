@@ -351,6 +351,9 @@ static slurm_errtab_t slurm_errtab[] = {
 	  "X11 forwarding not available"			},
 	{ ESLURM_BATCH_CONSTRAINT,
 	  "Job --batch option is invalid or not a subset of --constraints" },
+	{ ESLURM_INVALID_TRES_BILLING_WEIGHTS,
+	  "Invalid TRESBillingWeights specification"            },
+
 
 	/* slurmd error codes */
 	{ ESLRUMD_PIPE_ERROR_ON_TASK_SPAWN,
