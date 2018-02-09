@@ -419,6 +419,11 @@ scontrol_parse_part_options (int argc, char **argv, int *update_cnt_ptr,
 			part_msg_ptr->qos_char = val;
 			(*update_cnt_ptr)++;
 		}
+		else if (!xstrncasecmp(tag, "TresBillingWeights",
+				       MAX(taglen, 1))) {
+			part_msg_ptr->billing_weights_str = val;
+			(*update_cnt_ptr)++;
+		}
 		else {
 			exit_code = 1;
 			error("Update of this parameter is not "

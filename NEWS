@@ -78,6 +78,8 @@ documents those changes that are of interest to users and administrators.
  -- Change function name from node_features_p_changible_feature() to
     node_features_p_changeable_feature in node_features plugin.
  -- Add Slurm configuration file check logic using "slurmctld -t" command.
+ -- Add ability to create/update partition with TRESBillingWeights through
+    scontrol.
 
 * Changes in Slurm 17.11.4
 ==========================
