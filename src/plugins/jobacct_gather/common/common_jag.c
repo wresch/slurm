@@ -45,6 +45,7 @@
 #include <ctype.h>
 
 #include "src/common/slurm_xlator.h"
+#include "src/common/assoc_mgr.h"
 #include "src/common/slurm_jobacct_gather.h"
 #include "src/common/slurm_protocol_api.h"
 #include "src/common/slurm_protocol_defs.h"
@@ -62,6 +63,7 @@ static int my_pagesize = 0;
 static DIR  *slash_proc = NULL;
 static int energy_profile = ENERGY_DATA_NODE_ENERGY_UP;
 static uint64_t debug_flags = 0;
+static int tres_disk_pos = -1;
 
 static int _find_prec(void *x, void *key)
 {
@@ -446,8 +448,11 @@ static int _get_process_io_data_line(int in, jag_prec_t *prec) {
 	/* Copy the values that slurm records into our data structure */
 	prec->disk_read = (double)rchar / (double)1048576;
 	prec->disk_write = (double)wchar / (double)1048576;
-	prec->mb_read[USAGE_DISK] = (uint64_t) prec->disk_read;
-	prec->mb_written[USAGE_DISK] = (uint64_t) prec->disk_write;
+
+	if (tres_disk_pos != -1) {
+		prec->mb_read[tres_disk_pos] = (uint64_t) prec->disk_read;
+		prec->mb_written[tres_disk_pos] = (uint64_t) prec->disk_write;
+	}
 
 	return 1;
 }
@@ -459,8 +464,11 @@ static void _handle_stats(List prec_list, char *proc_stat_file, char *proc_io_fi
 	static int use_pss = -1;
 	FILE *stat_fp = NULL;
 	FILE *io_fp = NULL;
-	int fd, fd2;
+	int fd, fd2, i;
 	jag_prec_t *prec = NULL;
+	assoc_mgr_lock_t locks = {
+		NO_LOCK, NO_LOCK, NO_LOCK, NO_LOCK,
+		READ_LOCK, NO_LOCK, NO_LOCK };
 
 	if (no_share_data == -1) {
 		char *acct_params = slurm_get_jobacct_gather_params();
@@ -497,10 +505,21 @@ static void _handle_stats(List prec_list, char *proc_stat_file, char *proc_io_fi
 		fclose(stat_fp);
 		return;
 	}
-	prec->mb_read = xmalloc(TRES_USAGE_CNT * sizeof(uint64_t));
-	prec->mb_written = xmalloc(TRES_USAGE_CNT * sizeof(uint64_t));
-	prec->num_reads = xmalloc(TRES_USAGE_CNT * sizeof(uint64_t));
-	prec->num_writes = xmalloc(TRES_USAGE_CNT * sizeof(uint64_t));
+
+	assoc_mgr_lock(&locks);
+	prec->mb_read = xmalloc(g_tres_count * sizeof(uint64_t));
+	prec->mb_written = xmalloc(g_tres_count * sizeof(uint64_t));
+	prec->num_reads = xmalloc(g_tres_count * sizeof(uint64_t));
+	prec->num_writes = xmalloc(g_tres_count * sizeof(uint64_t));
+
+	/* Initialize read/writes */
+	for (i = 0; i < g_tres_count; i++) {
+		prec->mb_read[i] = NO_VAL64;
+		prec->mb_written[i] = NO_VAL64;
+		prec->num_reads[i] = NO_VAL64;
+		prec->num_writes[i] = NO_VAL64;
+	}
+	assoc_mgr_unlock(&locks);
 
 	if (!_get_process_data_line(fd, prec)) {
 		xfree(prec->mb_read);
@@ -758,11 +777,17 @@ static void _record_profile(struct jobacctinfo *jobacct)
 				(100.0 * (double)data[FIELD_CPUTIME].d) /
 				((double) et);
 
-		data[FIELD_READ].d = (double) jobacct->tres_usage_in_tot[
-			USAGE_DISK] - jobacct->last_tres_usage_in_tot;
+		if (tres_disk_pos != -1) {
+			data[FIELD_READ].d =
+				(double) jobacct->
+				tres_usage_in_tot[tres_disk_pos] -
+				jobacct->last_tres_usage_in_tot;
 
-		data[FIELD_WRITE].d = (double) jobacct->tres_usage_out_tot[
-			USAGE_DISK] - jobacct->last_tres_usage_out_tot;
+			data[FIELD_WRITE].d =
+				(double) jobacct->
+				tres_usage_out_tot[tres_disk_pos] -
+				jobacct->last_tres_usage_out_tot;
+		}
 	}
 
 	if (debug_flags & DEBUG_FLAG_PROFILE) {
@@ -777,11 +802,17 @@ static void _record_profile(struct jobacctinfo *jobacct)
 extern void jag_common_init(long in_hertz)
 {
 	uint32_t profile_opt;
+	slurmdb_tres_rec_t tres_rec;
 
 	debug_flags = slurm_get_debug_flags();
 
 	acct_gather_profile_g_get(ACCT_GATHER_PROFILE_RUNNING,
 				  &profile_opt);
+
+	memset(&tres_rec, 0, sizeof(slurmdb_tres_rec_t));
+	tres_rec.type = "usage";
+	tres_rec.name = "disk";
+	tres_disk_pos = assoc_mgr_find_tres_pos(&tres_rec, false);
 
 	/* If we are profiling energy it will be checked at a
 	   different rate, so just grab the last one.
@@ -822,6 +853,11 @@ extern void destroy_jag_prec(void *object)
 
 extern void print_jag_prec(jag_prec_t *prec)
 {
+	int i;
+	assoc_mgr_lock_t locks = {
+		NO_LOCK, NO_LOCK, NO_LOCK, NO_LOCK,
+		READ_LOCK, NO_LOCK, NO_LOCK };
+
 	info("pid %d (ppid %d)", prec->pid, prec->ppid);
 	info("act_cpufreq\t%d", prec->act_cpufreq);
 	info("disk read\t%f", prec->disk_read);
@@ -829,21 +865,16 @@ extern void print_jag_prec(jag_prec_t *prec)
 	info("pages\t%d", prec->pages);
 	info("rss  \t%"PRIu64"", prec->rss);
 	info("ssec \t%d", prec->ssec);
-	info("usage_disk_in \t%"PRIu64"", prec->mb_read[USAGE_DISK]);
-	info("usage_disk_out \t%"PRIu64"", prec->mb_written[USAGE_DISK]);
-	info("usage_fs_read \t%"PRIu64"", prec->mb_read[USAGE_FS_LUSTRE]);
-	info("usage_fs_written \t%"PRIu64"", prec->mb_written[USAGE_FS_LUSTRE]);
-	info("usage_fs_num_reads \t%"PRIu64"",
-	     prec->num_reads[USAGE_FS_LUSTRE]);
-	info("usage_fs_num_writes \t%"PRIu64"",
-	     prec->num_writes[USAGE_FS_LUSTRE]);
-	info("usage_ic_read \t%"PRIu64"", prec->mb_read[USAGE_IC_OFED]);
-	info("usage_ic_written \t%"PRIu64"", prec->mb_written[USAGE_IC_OFED]);
-	info("usage_ic_num_reads \t%"PRIu64"",
-	     prec->num_reads[USAGE_IC_OFED]);
-	info("usage_ic_num_writes \t%"PRIu64"",
-	     prec->num_writes[USAGE_IC_OFED]);
-
+	assoc_mgr_lock(&locks);
+	for (i=0; i<g_tres_count; i++) {
+		if (prec->mb_read[i] == NO_VAL64)
+			continue;
+		info("%s in/read \t%"PRIu64"",
+		     assoc_mgr_tres_name_array[i], prec->mb_read[i]);
+		info("%s out/write \t%"PRIu64"",
+		     assoc_mgr_tres_name_array[i], prec->mb_written[i]);
+	}
+	assoc_mgr_unlock(&locks);
 	info("usec \t%d", prec->usec);
 	info("vsize\t%"PRIu64"", prec->vsize);
 }
@@ -937,14 +968,25 @@ extern void jag_common_poll_data(
 			prec->disk_write);
 		jobacct->tot_disk_write = prec->disk_write;
 
-		for (i = 0; i < TRES_USAGE_CNT; i++) {
-			jobacct->tres_usage_in_max[i] =
-				MAX(jobacct->tres_usage_in_tot[i],
-				prec->mb_read[i]);
+		for (i = 0; i < jobacct->tres_count; i++) {
+			if (prec->mb_read[i] == NO_VAL64)
+				continue;
+			if (jobacct->tres_usage_in_max[i] == INFINITE64)
+				jobacct->tres_usage_in_max[i] =
+					prec->mb_read[i];
+			else
+				jobacct->tres_usage_in_max[i] =
+					MAX(jobacct->tres_usage_in_max[i],
+					    prec->mb_read[i]);
 			jobacct->tres_usage_in_tot[i] = prec->mb_read[i];
-			jobacct->tres_usage_out_max[i] =
-				MAX(jobacct->tres_usage_out_tot[i],
-				prec->mb_written[i]);
+
+			if (jobacct->tres_usage_out_max[i] == INFINITE64)
+				jobacct->tres_usage_out_max[i] =
+					prec->mb_written[i];
+			else
+				jobacct->tres_usage_out_max[i] =
+					MAX(jobacct->tres_usage_out_max[i],
+					    prec->mb_written[i]);
 			jobacct->tres_usage_out_tot[i] = prec->mb_written[i];
 		}
 
@@ -996,10 +1038,14 @@ extern void jag_common_poll_data(
 
 			_record_profile(jobacct);
 
-			jobacct->last_tres_usage_in_tot  =
-				jobacct->tres_usage_in_tot[USAGE_DISK];
-			jobacct->last_tres_usage_out_tot  =
-				jobacct->tres_usage_out_tot[USAGE_DISK];
+			if (tres_disk_pos != -1) {
+				jobacct->last_tres_usage_in_tot  =
+					jobacct->tres_usage_in_tot[
+						tres_disk_pos];
+				jobacct->last_tres_usage_out_tot  =
+					jobacct->tres_usage_out_tot[
+						tres_disk_pos];
+			}
 			jobacct->last_total_cputime = jobacct->tot_cpu;
 			jobacct->last_time = jobacct->cur_time;
 		}
